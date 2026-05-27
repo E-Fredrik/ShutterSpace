@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 77;
+	objectVersion = 70;
 	objects = {
 
 /* Begin PBXContainerItemProxy section */
@@ -30,21 +30,9 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		90ACDE352FB57E4300DA3D28 /* ShutterSpace */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = ShutterSpace;
-			sourceTree = "<group>";
-		};
-		90ACDE432FB57E4400DA3D28 /* ShutterSpaceTests */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = ShutterSpaceTests;
-			sourceTree = "<group>";
-		};
-		90ACDE4D2FB57E4400DA3D28 /* ShutterSpaceUITests */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = ShutterSpaceUITests;
-			sourceTree = "<group>";
-		};
+		90ACDE352FB57E4300DA3D28 /* ShutterSpace */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = ShutterSpace; sourceTree = "<group>"; };
+		90ACDE432FB57E4400DA3D28 /* ShutterSpaceTests */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = ShutterSpaceTests; sourceTree = "<group>"; };
+		90ACDE4D2FB57E4400DA3D28 /* ShutterSpaceUITests */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = ShutterSpaceUITests; sourceTree = "<group>"; };
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -187,6 +175,7 @@
 				};
 			};
 			buildConfigurationList = 90ACDE2E2FB57E4300DA3D28 /* Build configuration list for PBXProject "ShutterSpace" */;
+			compatibilityVersion = "Xcode 14.0";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
@@ -195,7 +184,6 @@
 			);
 			mainGroup = 90ACDE2A2FB57E4300DA3D28;
 			minimizedProjectReferenceProxies = 1;
-			preferredProjectObjectVersion = 77;
 			productRefGroup = 90ACDE342FB57E4300DA3D28 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
