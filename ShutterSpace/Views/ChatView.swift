@@ -22,13 +22,17 @@ struct ChatView: View {
         VStack {
             ScrollViewReader { proxy in
                 ScrollView {
-                    LazyVStack(spacing: 12) {
+                    LazyVStack(spacing: 16) {
+                        Text("Today 2:14 PM")
+                            .font(.caption2)
+                            .foregroundColor(.secondary)
+                            .padding(.top)
+                            
                         ForEach(viewModel.messages) { message in
                             MessageBubbleView(message: message)
                                 .id(message.id)
                         }
                     }
-                    .padding(.vertical)
                 }
                 .onChange(of: viewModel.messages) { _ in
                     withAnimation {
@@ -40,19 +44,23 @@ struct ChatView: View {
                 }
             }
             
-            Divider()
-            
             HStack(spacing: 12) {
-                TextField("Type a message...", text: $viewModel.newMessageText)
+                TextField("iMessage", text: $viewModel.newMessageText)
                     .padding(10)
+                    .padding(.horizontal, 8)
                     .background(Color(.systemGray6))
                     .cornerRadius(20)
                     .focused($isFocused)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 20)
+                            .stroke(Color(.systemGray4), lineWidth: 0.5)
+                    )
                 
                 Button(action: {
                     viewModel.sendMessage()
                 }) {
                     Image(systemName: "paperplane.fill")
+                        .font(.system(size: 16, weight: .bold))
                         .foregroundColor(.white)
                         .padding(10)
                         .background(Color.blue)
@@ -60,10 +68,18 @@ struct ChatView: View {
                 }
                 .disabled(viewModel.newMessageText.isEmpty)
             }
-            .padding()
+            .padding(.horizontal)
+            .padding(.top, 8)
+            .padding(.bottom, 2)
         }
         .navigationTitle(recipientName)
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Image(systemName: "info.circle")
+                    .foregroundColor(.blue)
+            }
+        }
         .alert("Policy Warning", isPresented: $viewModel.showAlert) {
             Button("OK", role: .cancel) { }
         } message: {
