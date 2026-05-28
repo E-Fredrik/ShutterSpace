@@ -48,7 +48,8 @@ extension BrowseView {
     func renderPhotographerGrid() -> some View {
         LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 16) {
             ForEach(browseViewModel.getFilteredPhotographers()) { photographer in
-                NavigationLink(destination: Text("Profile Detail")) {                    PhotographerCardView(photographer: photographer)
+                NavigationLink(destination: PhotographerDetailView(photographer: photographer)) {
+                    PhotographerCardView(photographer: photographer)
                 }
                 .buttonStyle(PlainButtonStyle())
             }
