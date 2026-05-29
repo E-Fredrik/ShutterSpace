@@ -8,8 +8,15 @@
 import SwiftUI
 
 struct ContentView: View {
+    
+    @AppStorage("currentUserId") private var currentUserId: String = ""
+    
     var body: some View {
-        BrowseView()
+        if currentUserId.isEmpty {
+            LoginView()
+        } else {
+            MainView()
+        }
     }
 }
 

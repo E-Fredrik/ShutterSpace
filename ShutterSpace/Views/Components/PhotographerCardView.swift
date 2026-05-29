@@ -8,22 +8,73 @@
 import SwiftUI
 
 struct PhotographerCardView: View {
-    let photographer: Photographer
+    let photographerDetails: Photographer
 
     var body: some View {
+
         VStack(alignment: .leading, spacing: 8.0) {
-            Rectangle()
-                .fill(Color(UIColor.secondarySystemBackground))
-                .aspectRatio(1.0, contentMode: .fill)
+            if photographerDetails.profileImageUrl.isEmpty
+                || !photographerDetails.profileImageUrl.starts(with: "http")
+            {
+
+                ZStack {
+                    Rectangle()
+                        .fill(Color(UIColor.secondarySystemBackground))
+                        .aspectRatio(1.0, contentMode: .fill)
+
+                    Image(systemName: "person.crop.circle.fill")
+                        .resizable()
+                        .scaledToFit()
+                        .padding(30.0)
+                        .foregroundColor(Color(UIColor.systemGray3))
+                }
                 .cornerRadius(12.0)
 
-            Text("\(photographer.firstName) \(photographer.lastName)")
-                .font(.headline)
-                .foregroundColor(.primary)
+            } else {
+                AsyncImage(
+                    url: URL(string: photographerDetails.profileImageUrl)
+                ) { phase in
+                    switch phase {
+                    case .empty:
+                        ZStack {
+                            Rectangle()
+                                .fill(Color(UIColor.secondarySystemBackground))
+                                .aspectRatio(1.0, contentMode: .fill)
+                            ProgressView()
+                        }
+                    case .success(let image):
+                        image
+                            .resizable()
+                            .aspectRatio(1.0, contentMode: .fill)
+                    case .failure(_):
+                        ZStack {
+                            Rectangle()
+                                .fill(Color(UIColor.secondarySystemBackground))
+                                .aspectRatio(1.0, contentMode: .fill)
+
+                            Image(systemName: "person.crop.circle.fill")
+                                .resizable()
+                                .scaledToFit()
+                                .padding(30.0)
+                                .foregroundColor(Color(UIColor.systemGray3))
+                        }
+                    @unknown default:
+                        EmptyView()
+                    }
+                }
+                .cornerRadius(12.0)
+                .clipped()
+            }
+
+            Text(
+                "\(photographerDetails.firstName) \(photographerDetails.lastName)"
+            )
+            .font(.headline)
+            .foregroundColor(.primary)
 
             HStack {
 
-                Text(photographer.category)
+                Text(photographerDetails.category)
                     .font(.subheadline)
                     .foregroundColor(.secondary)
 
@@ -33,7 +84,7 @@ struct PhotographerCardView: View {
                     .font(.caption)
                     .foregroundColor(.yellow)
 
-                Text(String(format: "%.1f", photographer.rating))
+                Text(String(format: "%.1f", photographerDetails.rating))
                     .font(.caption)
                     .foregroundColor(.primary)
             }
@@ -43,7 +94,7 @@ struct PhotographerCardView: View {
 
 #Preview {
     PhotographerCardView(
-        photographer: Photographer(
+        photographerDetails: Photographer(
             id: "photo_001",
             firstName: "Alia",
             lastName: "Rahman",

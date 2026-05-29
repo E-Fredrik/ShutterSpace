@@ -66,7 +66,7 @@ extension BrowseView {
                     )
                 ) {
                     PhotographerCardView(
-                        photographer: photographer
+                        photographerDetails: photographer
                     )
                 }
                 .buttonStyle(PlainButtonStyle())
