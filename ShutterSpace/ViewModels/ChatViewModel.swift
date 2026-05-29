@@ -7,6 +7,7 @@
 
 import Foundation
 import Combine
+import FirebaseFirestore
 
 @MainActor
 class ChatViewModel: ObservableObject {
@@ -15,91 +16,87 @@ class ChatViewModel: ObservableObject {
     @Published var showAlert: Bool = false
     @Published var alertMessage: String = ""
     
-    let currentUserId = "current_user"
+    private let db = Firestore.firestore()
+    private var listener: ListenerRegistration?
+    
+    let currentUserId = "current_user" // In real app, use Auth.auth().currentUser?.uid
     let recipientId: String
     
     init(recipientId: String) {
         self.recipientId = recipientId
-        loadMockMessages()
+        observeMessages()
     }
     
-    func loadMockMessages() {
-        self.messages = [
-            Message(id: "m1", senderId: recipientId, receiverId: currentUserId, content: "Hi! I saw your portfolio. Are you available for a wedding shoot?", timestamp: Date().addingTimeInterval(-3600), status: .read),
-            Message(id: "m2", senderId: currentUserId, receiverId: recipientId, content: "Hello! Yes, I am. Which date are you looking at?", timestamp: Date().addingTimeInterval(-3500), status: .read)
-        ]
+    deinit {
+        listener?.remove()
+    }
+    
+    func observeMessages() {
+        // Query messages for this conversation
+        listener = db.collection("messages")
+            .order(by: "timestamp", descending: false)
+            .addSnapshotListener { [weak self] querySnapshot, error in
+                guard let documents = querySnapshot?.documents else {
+                    print("Error fetching documents: \(error?.localizedDescription ?? "Unknown error")")
+                    return
+                }
+                
+                let allMessages = documents.compactMap { doc -> Message? in
+                    try? doc.data(as: Message.self)
+                }
+                
+                // Filter for this specific conversation (Sender <-> Receiver)
+                self?.messages = allMessages.filter { msg in
+                    (msg.senderId == self?.currentUserId && msg.receiverId == self?.recipientId) ||
+                    (msg.senderId == self?.recipientId && msg.receiverId == self?.currentUserId)
+                }
+            }
     }
     
     func sendMessage() {
         guard !newMessageText.trimmingCharacters(in: .whitespaces).isEmpty else { return }
         
         // PDF UC07: Regex check for platform leakage
-        if containsContactInfo(newMessageText) {
+        let isBlocked = containsContactInfo(newMessageText)
+        let content = isBlocked ? "Direct contact info is hidden to protect platform integrity." : newMessageText
+        
+        if isBlocked {
             self.alertMessage = "Sharing contact information is against ShutterSpace policy. Please keep communication on the platform."
             self.showAlert = true
-            
-            // Obstruct data as per PDF Design
-            let obstructedMessage = Message(
-                id: UUID().uuidString,
-                senderId: currentUserId,
-                receiverId: recipientId,
-                content: "Direct contact info is hidden to protect platform integrity.",
-                timestamp: Date(),
-                status: .sending,
-                isBlocked: true
-            )
-            messages.append(obstructedMessage)
-            newMessageText = ""
-            return
         }
         
         let message = Message(
             id: UUID().uuidString,
             senderId: currentUserId,
             receiverId: recipientId,
-            content: newMessageText,
+            content: content,
             timestamp: Date(),
-            status: .sending
+            status: .sending,
+            isBlocked: isBlocked
         )
         
-        messages.append(message)
-        let sentText = newMessageText
+        saveToFirestore(message)
         newMessageText = ""
-        
-        // Simulate real-time transit and delivery
-        Task {
-            try? await Task.sleep(nanoseconds: 1_000_000_000) // 1 second "sending"
-            if let index = messages.firstIndex(where: { $0.id == message.id }) {
-                messages[index].status = .delivered
-            }
+    }
+    
+    private func saveToFirestore(_ message: Message) {
+        do {
+            try db.collection("messages").document(message.id).setData(from: message)
             
-            // Simulate reply
-            try? await Task.sleep(nanoseconds: 2_000_000_000)
-            receiveReply(for: sentText)
+            // Simulate delivery status update after a short delay
+            Task {
+                try? await Task.sleep(nanoseconds: 1_000_000_000)
+                try? await db.collection("messages").document(message.id).updateData(["status": MessageStatus.delivered.rawValue])
+            }
+        } catch {
+            print("Error saving message: \(error)")
         }
     }
     
-    private func receiveReply(for text: String) {
-        let reply = Message(
-            id: UUID().uuidString,
-            senderId: recipientId,
-            receiverId: currentUserId,
-            content: "That sounds great! I'll check my calendar.",
-            timestamp: Date(),
-            status: .delivered
-        )
-        messages.append(reply)
-    }
-    
-    // PDF Requirement: Detect phone numbers and emails
     private func containsContactInfo(_ text: String) -> Bool {
         let emailRegex = "[A-Z0-9a-z._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,64}"
         let phoneRegex = "(?:\\+?(\\d{1,3}))?([-. (]*(\\d{3})[-. )]*)?((\\d{3})[-. ]*(\\d{2,4})(?:[-. ]*(\\d{2,4}))?)"
         
-        let emailPred = NSPredicate(format:"SELF MATCHES %@", emailRegex)
-        let phonePred = NSPredicate(format:"SELF MATCHES %@", phoneRegex)
-        
-        // Check for matches in the string
         let words = text.components(separatedBy: .whitespacesAndNewlines)
         for word in words {
             if word.range(of: emailRegex, options: .regularExpression) != nil ||

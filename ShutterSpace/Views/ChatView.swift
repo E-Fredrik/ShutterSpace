@@ -45,7 +45,7 @@ struct ChatView: View {
             }
             
             HStack(spacing: 12) {
-                TextField("iMessage", text: $viewModel.newMessageText)
+                TextField("Message", text: $viewModel.newMessageText)
                     .padding(10)
                     .padding(.horizontal, 8)
                     .background(Color(.systemGray6))

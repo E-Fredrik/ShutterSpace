@@ -190,9 +190,7 @@ extension ProfileDetailView {
         VStack {
             Divider()
             HStack(spacing: 16.0) {
-                Button(action: {
-                    
-                }) {
+                NavigationLink(destination: ChatView(recipientId: photographerDetails.id, recipientName: photographerDetails.firstName)) {
                     Image(systemName: "message.fill")
                         .font(.title2)
                         .foregroundColor(.white)
@@ -200,6 +198,7 @@ extension ProfileDetailView {
                         .background(Color(UIColor.darkGray))
                         .clipShape(Circle())
                 }
+                
                 Button(action: {
 
                 }) {
