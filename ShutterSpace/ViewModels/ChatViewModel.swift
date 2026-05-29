@@ -2,12 +2,12 @@
 //  ChatViewModel.swift
 //  ShutterSpace
 //
-//  Created by Stevanus Santoso on 28/05/26.
+//  Created by Rocky (AI) on 28/05/26.
 //
 
 import Foundation
 import Combine
-import FirebaseFirestore
+import FirebaseDatabase
 
 @MainActor
 class ChatViewModel: ObservableObject {
@@ -16,8 +16,8 @@ class ChatViewModel: ObservableObject {
     @Published var showAlert: Bool = false
     @Published var alertMessage: String = ""
     
-    private let db = Firestore.firestore()
-    private var listener: ListenerRegistration?
+    private let ref = Database.database().reference().child("messages")
+    private var handle: DatabaseHandle?
     
     let currentUserId = "current_user" // In real app, use Auth.auth().currentUser?.uid
     let recipientId: String
@@ -28,35 +28,52 @@ class ChatViewModel: ObservableObject {
     }
     
     deinit {
-        listener?.remove()
+        if let handle = handle {
+            ref.removeObserver(withHandle: handle)
+        }
     }
     
     func observeMessages() {
-        // Query messages for this conversation
-        listener = db.collection("messages")
-            .order(by: "timestamp", descending: false)
-            .addSnapshotListener { [weak self] querySnapshot, error in
-                guard let documents = querySnapshot?.documents else {
-                    print("Error fetching documents: \(error?.localizedDescription ?? "Unknown error")")
-                    return
+        // Realtime Database .value listener
+        handle = ref.observe(.value) { [weak self] snapshot in
+            guard let value = snapshot.value as? [String: [String: Any]] else {
+                print("No messages or wrong format")
+                DispatchQueue.main.async {
+                    self?.messages = []
                 }
-                
-                let allMessages = documents.compactMap { doc -> Message? in
-                    try? doc.data(as: Message.self)
+                return
+            }
+            
+            var allMessages: [Message] = []
+            
+            let decoder = JSONDecoder()
+            decoder.dateDecodingStrategy = .deferredToDate // Default for Date() in Codable
+            
+            for (id, data) in value {
+                // Convert dictionary to Message object
+                // Note: Since RTDB data is often just a dictionary, we manually map or use JSON serialization
+                if let msg = self?.mapDictionaryToMessage(id: id, data: data) {
+                    allMessages.append(msg)
                 }
-                
-                // Filter for this specific conversation (Sender <-> Receiver)
-                self?.messages = allMessages.filter { msg in
+            }
+            
+            // Sort by timestamp and filter for this conversation
+            let sortedFiltered = allMessages
+                .sorted(by: { $0.timestamp < $1.timestamp })
+                .filter { msg in
                     (msg.senderId == self?.currentUserId && msg.receiverId == self?.recipientId) ||
                     (msg.senderId == self?.recipientId && msg.receiverId == self?.currentUserId)
                 }
+            
+            DispatchQueue.main.async {
+                self?.messages = sortedFiltered
             }
+        }
     }
     
     func sendMessage() {
         guard !newMessageText.trimmingCharacters(in: .whitespaces).isEmpty else { return }
         
-        // PDF UC07: Regex check for platform leakage
         let isBlocked = containsContactInfo(newMessageText)
         let content = isBlocked ? "Direct contact info is hidden to protect platform integrity." : newMessageText
         
@@ -65,32 +82,50 @@ class ChatViewModel: ObservableObject {
             self.showAlert = true
         }
         
-        let message = Message(
-            id: UUID().uuidString,
-            senderId: currentUserId,
-            receiverId: recipientId,
-            content: content,
-            timestamp: Date(),
-            status: .sending,
-            isBlocked: isBlocked
-        )
+        let messageId = UUID().uuidString
+        let messageData: [String: Any] = [
+            "id": messageId,
+            "senderId": currentUserId,
+            "receiverId": recipientId,
+            "content": content,
+            "timestamp": Date().timeIntervalSinceReferenceDate, // RTDB preferred double
+            "status": MessageStatus.sending.rawValue,
+            "isBlocked": isBlocked
+        ]
         
-        saveToFirestore(message)
+        ref.child(messageId).setValue(messageData) { error, _ in
+            if let error = error {
+                print("Error saving to RTDB: \(error.localizedDescription)")
+            } else {
+                // Update status to delivered after write
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                    self.ref.child(messageId).updateChildValues(["status": MessageStatus.delivered.rawValue])
+                }
+            }
+        }
+        
         newMessageText = ""
     }
     
-    private func saveToFirestore(_ message: Message) {
-        do {
-            try db.collection("messages").document(message.id).setData(from: message)
-            
-            // Simulate delivery status update after a short delay
-            Task {
-                try? await Task.sleep(nanoseconds: 1_000_000_000)
-                try? await db.collection("messages").document(message.id).updateData(["status": MessageStatus.delivered.rawValue])
-            }
-        } catch {
-            print("Error saving message: \(error)")
+    private func mapDictionaryToMessage(id: String, data: [String: Any]) -> Message? {
+        guard let senderId = data["senderId"] as? String,
+              let receiverId = data["receiverId"] as? String,
+              let content = data["content"] as? String,
+              let timestampInterval = data["timestamp"] as? TimeInterval,
+              let statusString = data["status"] as? String,
+              let status = MessageStatus(rawValue: statusString) else {
+            return nil
         }
+        
+        return Message(
+            id: id,
+            senderId: senderId,
+            receiverId: receiverId,
+            content: content,
+            timestamp: Date(timeIntervalSinceReferenceDate: timestampInterval),
+            status: status,
+            isBlocked: data["isBlocked"] as? Bool ?? false
+        )
     }
     
     private func containsContactInfo(_ text: String) -> Bool {
