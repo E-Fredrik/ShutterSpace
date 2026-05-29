@@ -24,7 +24,7 @@ struct BrowseView: View {
             .task {
                 await browseViewModel.fetchPhotographers()
             }.preferredColorScheme(.dark)
-        }
+        }.navigationTitle("Browse")
     }
 }
 

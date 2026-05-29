@@ -6,6 +6,14 @@
 	objectVersion = 70;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		9073C5A52FC922B000F6087F /* FirebaseAnalytics in Frameworks */ = {isa = PBXBuildFile; productRef = 9073C5A42FC922B000F6087F /* FirebaseAnalytics */; };
+		9073C5A72FC922B000F6087F /* FirebaseAppCheck in Frameworks */ = {isa = PBXBuildFile; productRef = 9073C5A62FC922B000F6087F /* FirebaseAppCheck */; };
+		9073C5A92FC922B000F6087F /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = 9073C5A82FC922B000F6087F /* FirebaseAuth */; };
+		9073C5AB2FC922B000F6087F /* FirebaseCore in Frameworks */ = {isa = PBXBuildFile; productRef = 9073C5AA2FC922B000F6087F /* FirebaseCore */; };
+		9073C5AD2FC922B000F6087F /* FirebaseDatabase in Frameworks */ = {isa = PBXBuildFile; productRef = 9073C5AC2FC922B000F6087F /* FirebaseDatabase */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		90ACDE412FB57E4400DA3D28 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -40,6 +48,11 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				9073C5AD2FC922B000F6087F /* FirebaseDatabase in Frameworks */,
+				9073C5A72FC922B000F6087F /* FirebaseAppCheck in Frameworks */,
+				9073C5A92FC922B000F6087F /* FirebaseAuth in Frameworks */,
+				9073C5AB2FC922B000F6087F /* FirebaseCore in Frameworks */,
+				9073C5A52FC922B000F6087F /* FirebaseAnalytics in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -100,6 +113,11 @@
 			);
 			name = ShutterSpace;
 			packageProductDependencies = (
+				9073C5A42FC922B000F6087F /* FirebaseAnalytics */,
+				9073C5A62FC922B000F6087F /* FirebaseAppCheck */,
+				9073C5A82FC922B000F6087F /* FirebaseAuth */,
+				9073C5AA2FC922B000F6087F /* FirebaseCore */,
+				9073C5AC2FC922B000F6087F /* FirebaseDatabase */,
 			);
 			productName = ShutterSpace;
 			productReference = 90ACDE332FB57E4300DA3D28 /* ShutterSpace.app */;
@@ -184,6 +202,9 @@
 			);
 			mainGroup = 90ACDE2A2FB57E4300DA3D28;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				9073C5A32FC922B000F6087F /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
+			);
 			productRefGroup = 90ACDE342FB57E4300DA3D28 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -566,6 +587,45 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		9073C5A32FC922B000F6087F /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/firebase/firebase-ios-sdk";
+			requirement = {
+				branch = main;
+				kind = branch;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		9073C5A42FC922B000F6087F /* FirebaseAnalytics */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 9073C5A32FC922B000F6087F /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseAnalytics;
+		};
+		9073C5A62FC922B000F6087F /* FirebaseAppCheck */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 9073C5A32FC922B000F6087F /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseAppCheck;
+		};
+		9073C5A82FC922B000F6087F /* FirebaseAuth */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 9073C5A32FC922B000F6087F /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseAuth;
+		};
+		9073C5AA2FC922B000F6087F /* FirebaseCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 9073C5A32FC922B000F6087F /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseCore;
+		};
+		9073C5AC2FC922B000F6087F /* FirebaseDatabase */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 9073C5A32FC922B000F6087F /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseDatabase;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 90ACDE2B2FB57E4300DA3D28 /* Project object */;
 }

@@ -9,11 +9,12 @@ import SwiftUI
 import _PhotosUI_SwiftUI
 
 struct ManagePortfolioView: View {
-    
-    @StateObject private var portfolioViewModel: ManagePortfolioViewModel = ManagePortfolioViewModel()
+
+    @StateObject private var portfolioViewModel: ManagePortfolioViewModel =
+        ManagePortfolioViewModel()
     @State private var selectedTabDisplay: Int = 0
     @State private var isShowingAddPackageSheet: Bool = false
-    
+
     var body: some View {
         NavigationStack {
             VStack {
@@ -23,7 +24,7 @@ struct ManagePortfolioView: View {
                 }
                 .pickerStyle(SegmentedPickerStyle())
                 .padding()
-                
+
                 if selectedTabDisplay == 0 {
                     renderPortfolioGrid()
                 } else {
@@ -46,35 +47,49 @@ struct ManagePortfolioView: View {
 extension ManagePortfolioView {
     func renderPortfolioGrid() -> some View {
         ScrollView {
-            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible())], spacing: 2.0) {
-                PhotosPicker(selection: $portfolioViewModel.selectedPhotoItem, matching: .images) {
+            LazyVGrid(
+                columns: [
+                    GridItem(.flexible()), GridItem(.flexible()),
+                    GridItem(.flexible()),
+                ],
+                spacing: 2.0
+            ) {
+                PhotosPicker(
+                    selection: $portfolioViewModel.selectedPhotoItem,
+                    matching: .images
+                ) {
                     ZStack {
                         Rectangle()
                             .fill(Color(UIColor.systemBackground))
                             .aspectRatio(1.0, contentMode: .fit)
-                        
+
                         Image(systemName: "plus")
                             .font(.title2)
                             .foregroundColor(.primary)
                     }
                 }
-                .onChange(of: portfolioViewModel.selectedPhotoItem) { newSelectedItem in
+                .onChange(of: portfolioViewModel.selectedPhotoItem) {
+                    oldValue,
+                    newValue in
                     Task { @MainActor in
-                        await portfolioViewModel.processImageSelection(pickerItem: newSelectedItem)
+                        await portfolioViewModel.processImageSelection(
+                            pickerItem: newValue
+                        )
                     }
                 }
-                
-                ForEach(portfolioViewModel.portfolioImageUrls, id: \.self) { imageUrl in
+
+                ForEach(portfolioViewModel.portfolioImageUrls, id: \.self) {
+                    imageUrl in
                     Rectangle()
                         .fill(Color(UIColor.tertiarySystemFill))
                         .aspectRatio(1.0, contentMode: .fit)
                 }
             }
             .padding(.horizontal, 2)
-                
+
         }
     }
-    
+
     func renderPackagesList() -> some View {
         List {
             ForEach(portfolioViewModel.servicePackage) { servicePackage in
