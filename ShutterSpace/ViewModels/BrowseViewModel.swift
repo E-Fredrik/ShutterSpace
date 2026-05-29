@@ -5,46 +5,70 @@
 //  Created by Elifele Fredrik on 28/05/26.
 //
 
-import Foundation
 import Combine
+import FirebaseDatabase
+import Foundation
 
 @MainActor
 class BrowseViewModel: ObservableObject {
-    
+
     @Published var photographers: [Photographer] = []
     @Published var searchText: String = ""
     @Published var selectedCategory: String = "All"
     @Published var isLoading: Bool = false
-    
+
+    private let databaseRef = Database.database().reference()
+
     func fetchPhotographers() async {
         isLoading = true
-        
+
         do {
-            let fetchedPhotographers: [Photographer] = try await getMockPhotographers()
-            self.photographers = fetchedPhotographers
+            let snapshot = try await databaseRef.child("users")
+                .queryOrdered(byChild: "role")
+                .queryEqual(toValue: "Photographer")
+                .getData()
+
+            if let children = snapshot.children.allObjects as? [DataSnapshot] {
+                var fetchedPhotographers: [Photographer] = []
+
+                for child in children {
+                    if let dict = child.value as? [String: Any],
+                        let jsonData = try? JSONSerialization.data(
+                            withJSONObject: dict
+                        ),
+                        let photographer = try? JSONDecoder().decode(
+                            Photographer.self,
+                            from: jsonData
+                        )
+                    {
+                        fetchedPhotographers.append(photographer)
+                    }
+                }
+
+                self.photographers = fetchedPhotographers
+            }
         } catch {
             print(error)
         }
-        
+
         isLoading = false
     }
-    
-    func getMockPhotographers() async throws -> [Photographer] {
-        return [
-            Photographer(id: "1", firstName: "Alice", lastName: "Smith", startingPrice: 200.0, rating: 4.5, location: "New York", category: "Wedding", profileImageURL: "https://example.com/alice.jpg"),
-            Photographer(id: "2", firstName: "Bob", lastName: "Johnson", startingPrice: 150.0, rating: 4.0, location: "Los Angeles", category: "Portrait", profileImageURL: "https://example.com/bob.jpg"),
-            Photographer(id: "3", firstName: "Charlie", lastName: "Brown", startingPrice: 300.0, rating: 5.0, location: "Chicago", category: "Event", profileImageURL: "https://example.com/charlie.jpg")
-        ]
-    }
-    
+
     func getFilteredPhotographers() -> [Photographer] {
         return photographers.filter { currentPhotographer in
-            let matchesSearch: Bool = searchText.isEmpty || currentPhotographer.firstName.localizedCaseInsensitiveContains(searchText) || currentPhotographer.lastName.localizedCaseInsensitiveContains(searchText)
-            let matchesCategory: Bool = selectedCategory == "All" || currentPhotographer.category == selectedCategory
-            
+            let matchesSearch: Bool =
+                searchText.isEmpty
+                || currentPhotographer.firstName
+                    .localizedCaseInsensitiveContains(searchText)
+                || currentPhotographer.lastName
+                    .localizedCaseInsensitiveContains(searchText)
+            let matchesCategory: Bool =
+                selectedCategory == "All"
+                || currentPhotographer.category == selectedCategory
+
             return matchesSearch && matchesCategory
-                
+
         }
     }
-    
+
 }

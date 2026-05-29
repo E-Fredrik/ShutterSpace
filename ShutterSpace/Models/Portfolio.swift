@@ -7,7 +7,8 @@
 
 import Foundation
 
-struct Portfolio: Identifiable, Hashable {
-    let id: String
+struct Portfolio: Identifiable, Codable {
+    var id: String { portfolioId }
+    let portfolioId: String
     let imageUrls: [String]
 }

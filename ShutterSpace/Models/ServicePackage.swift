@@ -7,11 +7,11 @@
 
 import Foundation
 
-struct ServicePackage: Identifiable, Hashable {
-    let id: String
+struct ServicePackage: Identifiable, Codable {
+    var id: String { packageId }
+    let packageId: String
     let title: String
     let price: Double
     let deliverables: String
 }
-
 

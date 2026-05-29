@@ -9,11 +9,12 @@ import SwiftUI
 import _PhotosUI_SwiftUI
 
 struct ManagePortfolioView: View {
-    
-    @StateObject private var portfolioViewModel: ManagePortfolioViewModel = ManagePortfolioViewModel()
+
+    @StateObject private var portfolioViewModel: ManagePortfolioViewModel =
+        ManagePortfolioViewModel()
     @State private var selectedTabDisplay: Int = 0
     @State private var isShowingAddPackageSheet: Bool = false
-    
+
     var body: some View {
         NavigationStack {
             VStack {
@@ -23,7 +24,7 @@ struct ManagePortfolioView: View {
                 }
                 .pickerStyle(SegmentedPickerStyle())
                 .padding()
-                
+
                 if selectedTabDisplay == 0 {
                     renderPortfolioGrid()
                 } else {
@@ -45,36 +46,80 @@ struct ManagePortfolioView: View {
 
 extension ManagePortfolioView {
     func renderPortfolioGrid() -> some View {
+
         ScrollView {
-            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible())], spacing: 2.0) {
-                PhotosPicker(selection: $portfolioViewModel.selectedPhotoItem, matching: .images) {
+
+            LazyVGrid(
+                columns: [
+                    GridItem(.flexible()), GridItem(.flexible()),
+                    GridItem(.flexible()),
+                ],
+                spacing: 2.0
+            ) {
+
+                PhotosPicker(
+                    selection: $portfolioViewModel.selectedPhotoItem,
+                    matching: .images
+                ) {
                     ZStack {
                         Rectangle()
-                            .fill(Color(UIColor.systemBackground))
+                            .fill(Color(UIColor.secondarySystemBackground))
                             .aspectRatio(1.0, contentMode: .fit)
-                        
-                        Image(systemName: "plus")
-                            .font(.title2)
-                            .foregroundColor(.primary)
+
+                        if portfolioViewModel.isDataLoading {
+                            ProgressView()
+                        } else {
+                            Image(systemName: "plus")
+                                .font(.title2)
+                                .foregroundColor(.primary)
+                        }
                     }
                 }
-                .onChange(of: portfolioViewModel.selectedPhotoItem) { newSelectedItem in
-                    Task { @MainActor in
-                        await portfolioViewModel.processImageSelection(pickerItem: newSelectedItem)
-                    }
+                .disabled(portfolioViewModel.isDataLoading)
+                .onChange(of: portfolioViewModel.selectedPhotoItem) {
+                    newlySelectedItem in
+                    portfolioViewModel.processImageSelection(
+                        pickerItem: newlySelectedItem
+                    )
                 }
-                
-                ForEach(portfolioViewModel.portfolioImageUrls, id: \.self) { imageUrl in
-                    Rectangle()
-                        .fill(Color(UIColor.tertiarySystemFill))
-                        .aspectRatio(1.0, contentMode: .fit)
+
+                ForEach(portfolioViewModel.portfolioImageUrls, id: \.self) {
+                    imageUrl in
+                    AsyncImage(url: URL(string: imageUrl)) { phase in
+                        switch phase {
+                        case .empty:
+                            ProgressView()
+                                .frame(
+                                    maxWidth: .infinity,
+                                    maxHeight: .infinity
+                                )
+                                .background(Color(UIColor.tertiarySystemFill))
+                        case .success(let image):
+                            image
+                                .resizable()
+                                .aspectRatio(1.0, contentMode: .fill)
+                        case .failure(_):
+                            VStack(spacing: 4.0) {
+                                Image(systemName: "photo.badge.exclamationmark")
+                                    .foregroundColor(.gray)
+                                Text("Error")
+                                    .font(.caption2)
+                                    .foregroundColor(.gray)
+                            }
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                            .background(Color(UIColor.tertiarySystemFill))
+                        @unknown default:
+                            EmptyView()
+                        }
+                    }
+                    .aspectRatio(1.0, contentMode: .fill)
+                    .clipped()
                 }
             }
-            .padding(.horizontal, 2)
-                
+            .padding(.horizontal, 2.0)
         }
     }
-    
+
     func renderPackagesList() -> some View {
         List {
             ForEach(portfolioViewModel.servicePackage) { servicePackage in

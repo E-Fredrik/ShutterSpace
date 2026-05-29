@@ -9,19 +9,19 @@ import SwiftUI
 
 struct PackageRowView: View {
     let activeServicePackage: ServicePackage
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: 6.0) {
             HStack {
                 Text(activeServicePackage.title)
                     .font(.headline)
                 Spacer()
-                
+
                 Text("$\(String(format: "%.2f", activeServicePackage.price))")
                     .font(.subheadline)
                     .foregroundColor(.secondary)
             }
-            
+
             Text(activeServicePackage.deliverables)
                 .font(.caption)
                 .foregroundColor(Color(UIColor.secondaryLabel))
@@ -32,6 +32,13 @@ struct PackageRowView: View {
 }
 
 #Preview {
-    PackageRowView(activeServicePackage: ServicePackage(id: "1", title: "Basic Package", price: 500.0, deliverables: "4 hours of coverage, 100 edited photos"))
+    PackageRowView(
+        activeServicePackage: ServicePackage(
+            packageId: "pkg_001",
+            title: "4-Hour Wedding Shoot",
+            price: 480.0,
+            deliverables: "1 photographer, 200 edited photos"
+        )
+    )
 
 }
