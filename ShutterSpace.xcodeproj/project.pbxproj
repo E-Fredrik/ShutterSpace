@@ -3,10 +3,12 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 70;
+	objectVersion = 71;
 	objects = {
 
 /* Begin PBXBuildFile section */
+		90712A432FC930FD00B84ECC /* Cloudinary in Frameworks */ = {isa = PBXBuildFile; productRef = 90712A422FC930FD00B84ECC /* Cloudinary */; };
+		90712A492FC931E500B84ECC /* .gitignore in Resources */ = {isa = PBXBuildFile; fileRef = 90712A482FC931E100B84ECC /* .gitignore */; };
 		9073C5A52FC922B000F6087F /* FirebaseAnalytics in Frameworks */ = {isa = PBXBuildFile; productRef = 9073C5A42FC922B000F6087F /* FirebaseAnalytics */; };
 		9073C5A72FC922B000F6087F /* FirebaseAppCheck in Frameworks */ = {isa = PBXBuildFile; productRef = 9073C5A62FC922B000F6087F /* FirebaseAppCheck */; };
 		9073C5A92FC922B000F6087F /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = 9073C5A82FC922B000F6087F /* FirebaseAuth */; };
@@ -32,13 +34,24 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		90712A482FC931E100B84ECC /* .gitignore */ = {isa = PBXFileReference; lastKnownFileType = text; path = .gitignore; sourceTree = "<group>"; };
 		90ACDE332FB57E4300DA3D28 /* ShutterSpace.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ShutterSpace.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		90ACDE402FB57E4400DA3D28 /* ShutterSpaceTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ShutterSpaceTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		90ACDE4A2FB57E4400DA3D28 /* ShutterSpaceUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ShutterSpaceUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		90712A4D2FC933B700B84ECC /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 90ACDE322FB57E4300DA3D28 /* ShutterSpace */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		90ACDE352FB57E4300DA3D28 /* ShutterSpace */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = ShutterSpace; sourceTree = "<group>"; };
+		90ACDE352FB57E4300DA3D28 /* ShutterSpace */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (90712A4D2FC933B700B84ECC /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = ShutterSpace; sourceTree = "<group>"; };
 		90ACDE432FB57E4400DA3D28 /* ShutterSpaceTests */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = ShutterSpaceTests; sourceTree = "<group>"; };
 		90ACDE4D2FB57E4400DA3D28 /* ShutterSpaceUITests */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = ShutterSpaceUITests; sourceTree = "<group>"; };
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -50,6 +63,7 @@
 			files = (
 				9073C5AD2FC922B000F6087F /* FirebaseDatabase in Frameworks */,
 				9073C5A72FC922B000F6087F /* FirebaseAppCheck in Frameworks */,
+				90712A432FC930FD00B84ECC /* Cloudinary in Frameworks */,
 				9073C5A92FC922B000F6087F /* FirebaseAuth in Frameworks */,
 				9073C5AB2FC922B000F6087F /* FirebaseCore in Frameworks */,
 				9073C5A52FC922B000F6087F /* FirebaseAnalytics in Frameworks */,
@@ -76,6 +90,7 @@
 		90ACDE2A2FB57E4300DA3D28 = {
 			isa = PBXGroup;
 			children = (
+				90712A482FC931E100B84ECC /* .gitignore */,
 				90ACDE352FB57E4300DA3D28 /* ShutterSpace */,
 				90ACDE432FB57E4400DA3D28 /* ShutterSpaceTests */,
 				90ACDE4D2FB57E4400DA3D28 /* ShutterSpaceUITests */,
@@ -118,6 +133,7 @@
 				9073C5A82FC922B000F6087F /* FirebaseAuth */,
 				9073C5AA2FC922B000F6087F /* FirebaseCore */,
 				9073C5AC2FC922B000F6087F /* FirebaseDatabase */,
+				90712A422FC930FD00B84ECC /* Cloudinary */,
 			);
 			productName = ShutterSpace;
 			productReference = 90ACDE332FB57E4300DA3D28 /* ShutterSpace.app */;
@@ -204,6 +220,7 @@
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				9073C5A32FC922B000F6087F /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
+				90712A412FC930FD00B84ECC /* XCRemoteSwiftPackageReference "cloudinary_ios" */,
 			);
 			productRefGroup = 90ACDE342FB57E4300DA3D28 /* Products */;
 			projectDirPath = "";
@@ -221,6 +238,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				90712A492FC931E500B84ECC /* .gitignore in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -280,6 +298,8 @@
 /* Begin XCBuildConfiguration section */
 		90ACDE522FB57E4400DA3D28 /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReferenceAnchor = 90ACDE352FB57E4300DA3D28 /* ShutterSpace */;
+			baseConfigurationReferenceRelativePath = Secrets.xcconfig;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
@@ -344,6 +364,8 @@
 		};
 		90ACDE532FB57E4400DA3D28 /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReferenceAnchor = 90ACDE352FB57E4300DA3D28 /* ShutterSpace */;
+			baseConfigurationReferenceRelativePath = Secrets.xcconfig;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
@@ -409,6 +431,7 @@
 				DEVELOPMENT_TEAM = V23GVR66K5;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = ShutterSpace/Info.plist;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -441,6 +464,7 @@
 				DEVELOPMENT_TEAM = V23GVR66K5;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = ShutterSpace/Info.plist;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -589,6 +613,14 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
+		90712A412FC930FD00B84ECC /* XCRemoteSwiftPackageReference "cloudinary_ios" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/cloudinary/cloudinary_ios.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 5.2.5;
+			};
+		};
 		9073C5A32FC922B000F6087F /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/firebase/firebase-ios-sdk";
@@ -600,6 +632,11 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		90712A422FC930FD00B84ECC /* Cloudinary */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 90712A412FC930FD00B84ECC /* XCRemoteSwiftPackageReference "cloudinary_ios" */;
+			productName = Cloudinary;
+		};
 		9073C5A42FC922B000F6087F /* FirebaseAnalytics */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 9073C5A32FC922B000F6087F /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;

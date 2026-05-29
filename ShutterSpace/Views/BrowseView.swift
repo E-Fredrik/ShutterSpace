@@ -8,9 +8,13 @@
 import SwiftUI
 
 struct BrowseView: View {
-    @StateObject private var browseViewModel: BrowseViewModel = BrowseViewModel()
-    let availableCategories: [String] = ["Wedding", "Portrait", "Landscape", "Event", "Fashion", "Food", "Travel"]
-    
+    @StateObject private var browseViewModel: BrowseViewModel =
+        BrowseViewModel()
+    let availableCategories: [String] = [
+        "Wedding", "Portrait", "Landscape", "Event", "Fashion", "Food",
+        "Travel",
+    ]
+
     var body: some View {
         NavigationStack {
             ScrollView {
@@ -20,7 +24,10 @@ struct BrowseView: View {
                 }.padding()
             }
             .navigationTitle("Discover")
-            .searchable(text: $browseViewModel.searchText, prompt: "Search photographers")
+            .searchable(
+                text: $browseViewModel.searchText,
+                prompt: "Search photographers"
+            )
             .task {
                 await browseViewModel.fetchPhotographers()
             }.preferredColorScheme(.dark)
@@ -35,7 +42,8 @@ extension BrowseView {
                 ForEach(availableCategories, id: \.self) { category in
                     CategoryPillView(
                         categoryTitle: category,
-                        isCategorySelected: browseViewModel.selectedCategory == category,
+                        isCategorySelected: browseViewModel.selectedCategory
+                            == category,
                         tapAction: {
                             browseViewModel.selectedCategory = category
                         }
@@ -44,11 +52,22 @@ extension BrowseView {
             }
         }
     }
-    
+
     func renderPhotographerGrid() -> some View {
-        LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 16) {
-            ForEach(browseViewModel.getFilteredPhotographers()) { photographer in
-                NavigationLink(destination: Text("Profile Detail")) {                    PhotographerCardView(photographer: photographer)
+        LazyVGrid(
+            columns: [GridItem(.flexible()), GridItem(.flexible())],
+            spacing: 16
+        ) {
+            ForEach(browseViewModel.getFilteredPhotographers()) {
+                photographer in
+                NavigationLink(
+                    destination: ProfileDetailView(
+                        photographerDetails: photographer
+                    )
+                ) {
+                    PhotographerCardView(
+                        photographer: photographer
+                    )
                 }
                 .buttonStyle(PlainButtonStyle())
             }

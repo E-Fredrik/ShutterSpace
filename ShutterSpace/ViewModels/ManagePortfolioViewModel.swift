@@ -61,12 +61,15 @@ class ManagePortfolioViewModel: ObservableObject {
     }
 
     func fetchPortfolioImages() async throws {
+
         let snapshot = try await databaseRef.child("portfolios").child(
             photographerId
         ).child("imageUrls").getData()
 
         if let array = snapshot.value as? [String] {
-            self.portfolioImageUrls = array
+            self.portfolioImageUrls = array.map {
+                CloudinaryManager.shared.getOptimizedUrl(from: $0, width: 800)
+            }
         }
     }
 
@@ -95,12 +98,30 @@ class ManagePortfolioViewModel: ObservableObject {
         }
     }
 
-    func processImageSelection(pickerItem: PhotosPickerItem?) async {
-        if pickerItem != nil {
-            portfolioImageUrls.insert(
-                "https://example.com/newly_selected_image.jpg",
-                at: 0
-            )
+    func processImageSelection(pickerItem: PhotosPickerItem?) {
+        guard let pickerItem = pickerItem else { return }
+        Task {
+            isDataLoading = true
+            do {
+                if let imageData = try await pickerItem.loadTransferable(
+                    type: Data.self
+                ) {
+                    let uploadedUrl = try await CloudinaryManager.shared
+                        .uploadImage(data: imageData)
+                    let optimizedUrl = CloudinaryManager.shared.getOptimizedUrl(
+                        from: uploadedUrl,
+                        width: 800
+                    )
+                    self.portfolioImageUrls.insert(optimizedUrl, at: 0)
+                    try await databaseRef.child("portfolios").child(
+                        photographerId
+                    ).child("imageUrls").setValue(self.portfolioImageUrls)
+                }
+            } catch {
+                print(error)
+            }
+            self.selectedPhotoItem = nil
+            isDataLoading = false
         }
     }
 }
