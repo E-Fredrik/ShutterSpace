@@ -15,4 +15,5 @@ struct Booking: Identifiable, Codable {
     let packageId: String
     let status: String
     let totalCost: Double
+    let xenditToken: String
 }

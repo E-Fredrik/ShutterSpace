@@ -1,5 +1,5 @@
 {
-  "originHash" : "4bffe1a2744640d24cb9d2eecbda12fef5f0cc38a2f80b6cedb5761b9dd09bdd",
+  "originHash" : "ce1959c789b6d8011bfc37cc9829820a91f9c01713a23ed9d587f2593766ce8d",
   "pins" : [
     {
       "identity" : "abseil-cpp-binary",
@@ -125,6 +125,24 @@
       "state" : {
         "revision" : "540318ecedd63d883069ae7f1ed811a2df00b6ac",
         "version" : "2.4.0"
+      }
+    },
+    {
+      "identity" : "sentry-cocoa",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/getsentry/sentry-cocoa.git",
+      "state" : {
+        "revision" : "56fb914f14922efeda6c744c0125696552b6d2b5",
+        "version" : "8.53.1"
+      }
+    },
+    {
+      "identity" : "xendit-sdk-ios-src",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/xendit/xendit-sdk-ios-src",
+      "state" : {
+        "revision" : "9017589c60ac127417ac12f5f17862d1c655ae9f",
+        "version" : "3.10.8"
       }
     }
   ],

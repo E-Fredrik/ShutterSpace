@@ -13,6 +13,7 @@
 		561412C72FC96BA50018979E /* FirebaseCore in Frameworks */ = {isa = PBXBuildFile; productRef = 561412C62FC96BA50018979E /* FirebaseCore */; };
 		561412C92FC96BA50018979E /* FirebaseDatabase in Frameworks */ = {isa = PBXBuildFile; productRef = 561412C82FC96BA50018979E /* FirebaseDatabase */; };
 		561412CC2FC96EC30018979E /* Cloudinary in Frameworks */ = {isa = PBXBuildFile; productRef = 561412CB2FC96EC30018979E /* Cloudinary */; };
+		902558BB2FC9B97600B0D195 /* Xendit in Frameworks */ = {isa = PBXBuildFile; productRef = 902558BA2FC9B97600B0D195 /* Xendit */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -62,6 +63,7 @@
 				561412C92FC96BA50018979E /* FirebaseDatabase in Frameworks */,
 				561412C32FC96BA50018979E /* FirebaseAppCheck in Frameworks */,
 				561412CC2FC96EC30018979E /* Cloudinary in Frameworks */,
+				902558BB2FC9B97600B0D195 /* Xendit in Frameworks */,
 				561412C52FC96BA50018979E /* FirebaseAuth in Frameworks */,
 				561412C72FC96BA50018979E /* FirebaseCore in Frameworks */,
 				561412C12FC96BA50018979E /* FirebaseAnalytics in Frameworks */,
@@ -131,6 +133,7 @@
 				561412C62FC96BA50018979E /* FirebaseCore */,
 				561412C82FC96BA50018979E /* FirebaseDatabase */,
 				561412CB2FC96EC30018979E /* Cloudinary */,
+				902558BA2FC9B97600B0D195 /* Xendit */,
 			);
 			productName = ShutterSpace;
 			productReference = 90ACDE332FB57E4300DA3D28 /* ShutterSpace.app */;
@@ -218,6 +221,7 @@
 			packageReferences = (
 				561412BF2FC96BA50018979E /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
 				561412CA2FC96EC30018979E /* XCRemoteSwiftPackageReference "cloudinary_ios" */,
+				902558B92FC9B97600B0D195 /* XCRemoteSwiftPackageReference "xendit-sdk-ios-src" */,
 			);
 			productRefGroup = 90ACDE342FB57E4300DA3D28 /* Products */;
 			projectDirPath = "";
@@ -627,6 +631,14 @@
 				minimumVersion = 5.2.5;
 			};
 		};
+		902558B92FC9B97600B0D195 /* XCRemoteSwiftPackageReference "xendit-sdk-ios-src" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/xendit/xendit-sdk-ios-src";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 3.10.8;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -659,6 +671,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 561412CA2FC96EC30018979E /* XCRemoteSwiftPackageReference "cloudinary_ios" */;
 			productName = Cloudinary;
+		};
+		902558BA2FC9B97600B0D195 /* Xendit */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 902558B92FC9B97600B0D195 /* XCRemoteSwiftPackageReference "xendit-sdk-ios-src" */;
+			productName = Xendit;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
