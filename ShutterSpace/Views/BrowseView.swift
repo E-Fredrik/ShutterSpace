@@ -11,7 +11,7 @@ struct BrowseView: View {
     @StateObject private var browseViewModel: BrowseViewModel =
         BrowseViewModel()
     let availableCategories: [String] = [
-        "Wedding", "Portrait", "Landscape", "Event", "Fashion", "Food",
+        "All", "Wedding", "Portrait", "Landscape", "Event", "Fashion", "Food",
         "Travel",
     ]
 
