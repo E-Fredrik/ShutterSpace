@@ -1,0 +1,30 @@
+//
+//  TimeSlotButton.swift
+//  ShutterSpace
+//
+//  Created by Sean tandjaja on 31/05/26.
+//
+
+import SwiftUI
+
+struct TimeSlotButton: View {
+    
+    // MARK: - Properties
+    let time: String
+    let isSelected: Bool
+    let action: () -> Void
+    
+    // MARK: - Body
+    var body: some View {
+        Button(action: action) {
+            Text(time)
+                .font(.caption)
+                .fontWeight(.medium)
+                .padding(.vertical, 10)
+                .frame(maxWidth: .infinity)
+                .background(isSelected ? Color.white : Color(UIColor.secondarySystemBackground))
+                .foregroundColor(isSelected ? .black : .primary)
+                .cornerRadius(8)
+        }
+    }
+}
