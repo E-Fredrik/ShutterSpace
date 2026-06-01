@@ -19,6 +19,8 @@ struct ContentView: View {
             } else {
                 if currentUserRole == "Photographer" {
                     DashboardView()
+                } else if currentUserRole == "Admin" {
+                    AdminDashboardView() 
                 } else {
                     MainView()
                 }

@@ -68,29 +68,40 @@ class BookingViewModel: ObservableObject {
         return calculateSubtotal() + platformFee
     }
     
-    func processPaymentAndBook(cardNumber: String, expMonth: String, expYear: String, cvv: String) async throws {
-        isBookingInProgress = true
-        paymentErrorMessage = nil
-        
-        do {
-            let paymentToken = try await XenditManager.shared.createToken(
-                cardNumber: cardNumber,
-                expMonth: expMonth,
-                expYear: expYear,
-                cvv: cvv
-            )
+        func processPaymentAndBook(cardName: String, cardNumber: String, expMonth: String, expYear: String, cvv: String) async throws {
+            isBookingInProgress = true
+            paymentErrorMessage = nil
             
-            await createBooking(paymentTokenId: paymentToken)
+            let nameComponents = cardName.trimmingCharacters(in: .whitespacesAndNewlines).components(separatedBy: " ")
+            let firstName = nameComponents.first ?? "Client"
+            let lastName = nameComponents.count > 1 ? nameComponents.dropFirst().joined(separator: " ") : firstName
             
-            self.bookingComplete = true
-        } catch {
-            self.paymentErrorMessage = "Payment failed: Check your card details and try again."
+            do {
+                let paymentToken = try await XenditManager.shared.createToken(
+                    firstName: firstName,
+                    lastName: lastName,
+                    cardNumber: cardNumber,
+                    expMonth: expMonth,
+                    expYear: expYear,
+                    cvv: cvv,
+                    amount: calculateFinalTotal()
+                )
+                
+                await createBooking(paymentTokenId: paymentToken)
+                
+                self.bookingComplete = true
+            } catch let error as SafePaymentError {
+                self.paymentErrorMessage = error.localizedDescription
+                isBookingInProgress = false
+                throw error
+            } catch {
+                self.paymentErrorMessage = "An unexpected error occurred: \(error.localizedDescription)"
+                isBookingInProgress = false
+                throw error
+            }
+            
             isBookingInProgress = false
-            throw error
         }
-        
-        isBookingInProgress = false
-    }
     
     private func createBooking(paymentTokenId: String) async {
         guard let package = selectedPackage, let timeSlot = selectedTimeSlot else { return }

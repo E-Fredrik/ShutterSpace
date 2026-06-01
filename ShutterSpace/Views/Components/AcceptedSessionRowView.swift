@@ -23,7 +23,7 @@ struct AcceptedSessionRowView: View {
                 }
                 Spacer()
                 VStack(alignment: .trailing, spacing: 4) {
-                    Text("$\(String(format: "%.0f", session.totalCost))")
+                    Text("Rp \(String(format: "%.0f", session.totalCost))")
                         .font(.headline)
                     Text("Accepted")
                         .font(.caption)

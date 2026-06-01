@@ -19,7 +19,7 @@ struct PackageRowView: View {
                 Spacer()
 
                 VStack(alignment: .trailing, spacing: 2) {
-                    Text("$\(String(format: "%.2f", activeServicePackage.price))")
+                    Text("Rp \(String(format: "%.0f", activeServicePackage.price))")
                         .font(.subheadline)
                         .fontWeight(.semibold)
                     
@@ -36,16 +36,4 @@ struct PackageRowView: View {
         }
         .padding(.vertical, 8.0)
     }
-}
-
-#Preview {
-    PackageRowView(
-        activeServicePackage: ServicePackage(
-            packageId: "pkg_001",
-            title: "4-Hour Wedding Shoot",
-            price: 480.0,
-            deliverables: "1 photographer, 200 edited photos",
-            duration: "4 Hours"
-        )
-    )
 }

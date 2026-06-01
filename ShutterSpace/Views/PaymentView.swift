@@ -2,7 +2,7 @@
 //  PaymentView.swift
 //  ShutterSpace
 //
-//  Created by Elifele Fredrik on 01/06/26.
+//  Created by Sean tandjaja on 01/06/26.
 //
 
 import SwiftUI
@@ -11,6 +11,7 @@ struct PaymentView: View {
     @Environment(\.dismiss) var dismiss
     @ObservedObject var viewModel: BookingViewModel
     
+    @State private var cardName: String = ""
     @State private var cardNumber: String = ""
     @State private var expMonth: String = ""
     @State private var expYear: String = ""
@@ -20,6 +21,9 @@ struct PaymentView: View {
         NavigationStack {
             Form {
                 Section(header: Text("Card Details"), footer: Text("Secure payment processing powered by Xendit.")) {
+                    TextField("Cardholder Name", text: $cardName)
+                        .textContentType(.name)
+                    
                     TextField("Card Number", text: $cardNumber)
                         .keyboardType(.numberPad)
                         .textContentType(.creditCardNumber)
@@ -55,6 +59,7 @@ struct PaymentView: View {
                         Task {
                             do {
                                 try await viewModel.processPaymentAndBook(
+                                    cardName: cardName,
                                     cardNumber: cardNumber,
                                     expMonth: expMonth,
                                     expYear: expYear,
@@ -62,7 +67,7 @@ struct PaymentView: View {
                                 )
                                 dismiss()
                             } catch {
-                                // Handled via publisher
+                                // Error handled via publisher
                             }
                         }
                     } label: {
@@ -77,7 +82,7 @@ struct PaymentView: View {
                             Spacer()
                         }
                     }
-                    .disabled(viewModel.isBookingInProgress || cardNumber.isEmpty || expMonth.isEmpty || expYear.isEmpty || cvv.isEmpty)
+                    .disabled(viewModel.isBookingInProgress || cardName.isEmpty || cardNumber.isEmpty || expMonth.isEmpty || expYear.isEmpty || cvv.isEmpty)
                 }
             }
             .navigationTitle("Secure Checkout")
@@ -90,8 +95,4 @@ struct PaymentView: View {
             .preferredColorScheme(.dark)
         }
     }
-}
-
-#Preview {
-    PaymentView(viewModel: BookingViewModel(photographerId: "test_photographer_id"))
 }

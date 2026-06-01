@@ -9,6 +9,17 @@ import Foundation
 import Xendit
 import UIKit
 
+enum SafePaymentError: Error, LocalizedError {
+    case failed(String)
+    
+    var errorDescription: String? {
+        switch self {
+        case .failed(let message):
+            return message
+        }
+    }
+}
+
 @MainActor
 class XenditManager {
     static let shared = XenditManager()
@@ -17,38 +28,53 @@ class XenditManager {
         Xendit.publishableKey = "xnd_public_development_KtoIjyfCoJTNPsEx0LezIfjb7cEy9sXYj3E69oY2DHpL94NrultGQ9_jItVpSUQ"
     }
     
-    func createToken(cardNumber: String, expMonth: String, expYear: String, cvv: String) async throws -> String {
+    private func getTopViewController(base: UIViewController? = UIApplication.shared.connectedScenes
+        .compactMap({ $0 as? UIWindowScene })
+        .flatMap({ $0.windows })
+        .first(where: { $0.isKeyWindow })?.rootViewController) -> UIViewController? {
         
-        guard let rootVC = UIApplication.shared.connectedScenes
-            .compactMap({ $0 as? UIWindowScene })
-            .flatMap({ $0.windows })
-            .first(where: { $0.isKeyWindow })?.rootViewController else {
-            
-            throw URLError(.cannotFindHost)
+        if let nav = base as? UINavigationController {
+            return getTopViewController(base: nav.visibleViewController)
+        } else if let tab = base as? UITabBarController, let selected = tab.selectedViewController {
+            return getTopViewController(base: selected)
+        } else if let presented = base?.presentedViewController {
+            return getTopViewController(base: presented)
         }
-        
-        var cardData = CardData()
-        cardData.cardNumber = cardNumber
-        cardData.cardExpMonth = expMonth
-        cardData.cardExpYear = expYear
-        cardData.cardCvn = cvv
+        return base
+    }
+    
+        func createToken(firstName: String, lastName: String, cardNumber: String, expMonth: String, expYear: String, cvv: String, amount: Double) async throws -> String {
+            
+            guard let topVC = getTopViewController() else {
+                throw URLError(.cannotFindHost)
+            }
+            
+            var cardData = CardData()
+            cardData.cardHolderFirstName = firstName
+            cardData.cardHolderLastName = lastName
+            cardData.cardNumber = cardNumber
+            cardData.cardExpMonth = expMonth
+            
+            var formattedYear = expYear
+            if formattedYear.count == 2 {
+                formattedYear = "20" + formattedYear
+            }
+            cardData.cardExpYear = formattedYear
+            
+            cardData.cardCvn = cvv
+            cardData.amount = NSNumber(value: amount)
 
-        return try await withCheckedThrowingContinuation { continuation in
-            Xendit
-                .createToken(fromViewController: rootVC, cardData: cardData, shouldAuthenticate: true, onBehalfOf: "") { (
-                    token,
-                    error
-                ) in
-                
-                if let error = error {
-                    continuation.resume(throwing: error as! any Error)
-                } else if let token = token?.id {
-                    continuation.resume(returning: token)
-                } else {
-                    continuation.resume(throwing: URLError(.badServerResponse))
+            return try await withCheckedThrowingContinuation { continuation in
+                Xendit.createToken(fromViewController: topVC, cardData: cardData, shouldAuthenticate: true, onBehalfOf: "") { (token, error) in
+                    
+                    if let error = error {
+                        let errorMessage = error.message ?? "Unknown payment error occurred."
+                        continuation.resume(throwing: SafePaymentError.failed(errorMessage))
+                    } else if let token = token?.id {
+                        continuation.resume(returning: token)
+                    } else {
+                        continuation.resume(throwing: URLError(.badServerResponse))
+                    }
                 }
             }
         }
-    }
-}
-
