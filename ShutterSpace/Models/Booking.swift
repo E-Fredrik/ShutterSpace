@@ -16,4 +16,7 @@ struct Booking: Identifiable, Codable {
     let status: String
     let totalCost: Double
     let xenditToken: String
+    
+    var date: String?
+    var timeSlot: String?
 }

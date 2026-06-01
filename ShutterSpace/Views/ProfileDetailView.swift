@@ -199,9 +199,7 @@ extension ProfileDetailView {
                         .clipShape(Circle())
                 }
                 
-                Button(action: {
-
-                }) {
+                NavigationLink(destination: BookSessionView(photographerId: photographerDetails.id)) {
                     Text("Book Session")
                         .font(.headline)
                         .foregroundColor(.black)
