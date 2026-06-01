@@ -16,9 +16,8 @@ class BookingViewModel: ObservableObject {
     @Published var selectedPackage: ServicePackage?
     @Published var packages: [ServicePackage] = []
 
-    @Published var availableTimeSlots: [String] = [
-        "9:00 AM", "12:00 PM", "1:30 PM", "4:30 PM",
-    ]
+    @Published var availableTimeSlots: [String] = []
+    @Published var bookedTimeSlots: Set<String> = []
     @Published var isBookingInProgress: Bool = false
     @Published var bookingComplete: Bool = false
     @Published var paymentErrorMessage: String? = nil
@@ -59,6 +58,63 @@ class BookingViewModel: ObservableObject {
             }
         } catch {
             print("Error fetching packages: \(error.localizedDescription)")
+        }
+    }
+
+    /// Fetches the photographer's available time slots from Firebase.
+    func fetchAvailableTimeSlots() async {
+        do {
+            let snapshot = try await databaseRef
+                .child("availability")
+                .child(photographerId)
+                .child("timeSlots")
+                .getData()
+            if let slots = snapshot.value as? [String] {
+                self.availableTimeSlots = slots
+            } else {
+                self.availableTimeSlots = []
+            }
+        } catch {
+            print("Error fetching time slots: \(error.localizedDescription)")
+        }
+    }
+
+    /// Fetches all time slots already booked (Accepted or Completed) by this
+    /// photographer on the currently selected date. Those slots will be
+    /// greyed-out and un-selectable in the UI.
+    func fetchBookedTimeSlots() async {
+        let formatter: DateFormatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd"
+        let selectedDateString: String = formatter.string(from: selectedDate)
+
+        do {
+            let snapshot = try await databaseRef.child("bookings").getData()
+            guard let children = snapshot.children.allObjects as? [DataSnapshot] else {
+                self.bookedTimeSlots = []
+                return
+            }
+
+            var takenSlots: Set<String> = []
+
+            for child in children {
+                guard
+                    let dict = child.value as? [String: Any],
+                    let photoId = dict["photographerId"] as? String,
+                    photoId == photographerId,
+                    let status = dict["status"] as? String,
+                    status == "Accepted" || status == "Completed",
+                    let bookingDate = dict["date"] as? String,
+                    bookingDate == selectedDateString,
+                    let timeSlot = dict["timeSlot"] as? String
+                else { continue }
+
+                takenSlots.insert(timeSlot)
+            }
+
+            self.bookedTimeSlots = takenSlots
+        } catch {
+            print("Error fetching booked time slots: \(error.localizedDescription)")
+            self.bookedTimeSlots = []
         }
     }
 

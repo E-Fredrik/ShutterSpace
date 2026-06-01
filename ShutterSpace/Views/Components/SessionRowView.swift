@@ -15,6 +15,7 @@ struct SessionRowView: View {
         switch session.status {
         case "Accepted": return .green
         case "Completed": return .blue
+        case "Declined": return .red
         default: return .orange
         }
     }
@@ -23,6 +24,7 @@ struct SessionRowView: View {
         switch session.status {
         case "Accepted": return "Accepted"
         case "Completed": return "Completed"
+        case "Declined": return "Declined"
         default: return "Pending"
         }
     }
@@ -41,6 +43,7 @@ struct SessionRowView: View {
                 VStack(alignment: .trailing, spacing: 4) {
                     Text("Rp \(String(format: "%.0f", session.totalCost))")
                         .font(.headline)
+                    
                     Text(statusLabel)
                         .font(.caption)
                         .fontWeight(.semibold)
@@ -102,6 +105,18 @@ struct SessionRowView: View {
                         .lineLimit(1)
                         .truncationMode(.middle)
                 }
+            }
+            
+            if session.status == "Declined" {
+                HStack(spacing: 4) {
+                    Image(systemName: "arrow.uturn.backward.circle.fill")
+                        .foregroundColor(.red)
+                        .font(.footnote)
+                    Text("Refund has been initiated.")
+                        .font(.footnote)
+                        .foregroundColor(.red.opacity(0.8))
+                }
+                .padding(.top, 4)
             }
         }
         .padding()

@@ -37,7 +37,16 @@ struct BookSessionView: View {
         .navigationTitle("Book Session")
         .navigationBarTitleDisplayMode(.inline)
         .task {
-            await viewModel.fetchPackages()
+            async let packagesTask: () = viewModel.fetchPackages()
+            async let slotsTask: () = viewModel.fetchAvailableTimeSlots()
+            async let bookedTask: () = viewModel.fetchBookedTimeSlots()
+            _ = await (packagesTask, slotsTask, bookedTask)
+        }
+        .onChange(of: viewModel.selectedDate) { _ in
+            // Clear selected time slot when date changes so a stale slot
+            // cannot persist across dates, then re-check booked slots.
+            viewModel.selectedTimeSlot = nil
+            Task { await viewModel.fetchBookedTimeSlots() }
         }
         .alert("Booking Confirmed", isPresented: $viewModel.bookingComplete) {
             Button("Done") {
@@ -73,14 +82,44 @@ struct BookSessionView: View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Available Times")
                 .font(.headline)
-            
-            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
-                ForEach(viewModel.availableTimeSlots, id: \.self) { time in
-                    TimeSlotButton(
-                        time: time,
-                        isSelected: viewModel.selectedTimeSlot == time,
-                        action: { viewModel.selectTimeSlot(time) }
-                    )
+
+            if viewModel.availableTimeSlots.isEmpty {
+                Text("This photographer hasn't set their availability yet.")
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+                    .padding()
+                    .frame(maxWidth: .infinity, alignment: .center)
+                    .background(Color(UIColor.secondarySystemBackground))
+                    .cornerRadius(12)
+            } else {
+                LazyVGrid(
+                    columns: [
+                        GridItem(.flexible()), GridItem(.flexible()),
+                        GridItem(.flexible()), GridItem(.flexible()),
+                    ],
+                    spacing: 12
+                ) {
+                    ForEach(viewModel.availableTimeSlots, id: \.self) { time in
+                        let isBooked: Bool = viewModel.bookedTimeSlots.contains(time)
+                        TimeSlotButton(
+                            time: time,
+                            isSelected: viewModel.selectedTimeSlot == time,
+                            isBooked: isBooked,
+                            action: { viewModel.selectTimeSlot(time) }
+                        )
+                    }
+                }
+
+                if !viewModel.bookedTimeSlots.isEmpty {
+                    HStack(spacing: 6) {
+                        Image(systemName: "lock.fill")
+                            .font(.caption2)
+                            .foregroundColor(.red.opacity(0.7))
+                        Text("Already booked — not available on this date")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                    .padding(.top, 4)
                 }
             }
         }

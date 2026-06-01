@@ -23,7 +23,7 @@ struct PendingRequestRowView: View {
                         .foregroundColor(.secondary)
                 }
                 Spacer()
-                Text("$\(String(format: "%.0f", request.totalCost))")
+                Text("Rp\(String(format: "%.0f", request.totalCost))")
                     .font(.headline)
             }
             

@@ -13,7 +13,6 @@ struct DashboardView: View {
 
     @State private var sessionToComplete: AcceptedSession? = nil
     @State private var isShowingCompleteSheet: Bool = false
-    @State private var resultsLinkInput: String = ""
 
     var body: some View {
         NavigationStack {
@@ -70,34 +69,46 @@ struct DashboardView: View {
     }
 
     private func renderActionCards() -> some View {
-        HStack(spacing: 16) {
-            NavigationLink(destination: ManagePortfolioView()) {
-                ActionCardView(
-                    title: "Manage\nPortfolio",
-                    iconName: "photo.on.rectangle"
-                )
-            }
-            .buttonStyle(PlainButtonStyle())
+        VStack(spacing: 16) {
+            HStack(spacing: 16) {
+                NavigationLink(destination: ManagePortfolioView()) {
+                    ActionCardView(
+                        title: "Manage\nPortfolio",
+                        iconName: "photo.on.rectangle"
+                    )
+                }
+                .buttonStyle(PlainButtonStyle())
 
-            NavigationLink(
-                destination: AddPackageView(
-                    portfolioViewModel: ManagePortfolioViewModel()
-                )
-            ) {
+                NavigationLink(
+                    destination: AddPackageView(
+                        portfolioViewModel: ManagePortfolioViewModel()
+                    )
+                ) {
+                    ActionCardView(
+                        title: "Manage\nPackages",
+                        iconName: "shippingbox"
+                    )
+                }
+                .buttonStyle(PlainButtonStyle())
+            }
+
+            NavigationLink(destination: ManageAvailabilityView()) {
                 ActionCardView(
-                    title: "Manage\nPackages",
-                    iconName: "shippingbox"
+                    title: "Manage\nAvailability",
+                    iconName: "clock.badge.checkmark"
                 )
             }
             .buttonStyle(PlainButtonStyle())
         }
     }
 
+
     private func renderStatCards() -> some View {
         HStack(spacing: 16) {
+            // FIX: Changed from dollarsign to banknote, and $ to Rp
             StatCardView(
-                iconName: "dollarsign.circle.fill",
-                value: "$\(String(format: "%.0f", viewModel.totalEarnings))"
+                iconName: "banknote.fill",
+                value: "Rp \(String(format: "%.0f", viewModel.totalEarnings))"
             )
 
             StatCardView(
@@ -165,13 +176,9 @@ struct DashboardView: View {
                     AcceptedSessionRowView(
                         session: session,
                         onMarkCompleted: {
-                    
-                            Task {
-                                await viewModel.markSessionAsCompleted(
-                                    bookingId: session.id,
-                                    totalCost: session.totalCost
-                                )
-                            }
+                            // Automatically triggers the complete sheet
+                            self.sessionToComplete = session
+                            self.isShowingCompleteSheet = true
                         }
                     )
                 }
@@ -197,29 +204,13 @@ struct DashboardView: View {
                 }
                 .padding(.top, 24)
 
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("Results Link (optional)")
-                        .font(.subheadline)
-                        .fontWeight(.medium)
-                    TextField(
-                        "Paste the results link here...",
-                        text: $resultsLinkInput
-                    )
-                    .padding(12)
-                    .background(Color(UIColor.secondarySystemBackground))
-                    .cornerRadius(10)
-                    .keyboardType(.URL)
-                    .autocapitalization(.none)
-                }
-                .padding(.horizontal)
-
                 Button {
                     if let session = sessionToComplete {
                         isShowingCompleteSheet = false
                         Task {
                             await viewModel.markSessionAsCompleted(
-                                bookingId: session.bookingId,
-                                totalCost: session.totalCost,
+                                bookingId: session.id,
+                                totalCost: session.totalCost
                             )
                         }
                     }

@@ -27,6 +27,7 @@ struct SessionItem: Identifiable {
 class MySessionsViewModel: ObservableObject {
     @Published var activeSessions: [SessionItem] = []
     @Published var completedSessions: [SessionItem] = []
+    @Published var declinedSessions: [SessionItem] = []
     @Published var isLoading: Bool = false
     @Published var shouldShowReviewSubmittedBanner: Bool = false
     @Published var errorMessage: String = ""
@@ -49,14 +50,14 @@ class MySessionsViewModel: ObservableObject {
 
             var activeItems: [SessionItem] = []
             var completedItems: [SessionItem] = []
+            var declinedItems: [SessionItem] = []
 
             for child in children {
                 guard
                     let dict = child.value as? [String: Any],
                     let clientId = dict["clientId"] as? String,
                     clientId == currentUserId,
-                    let status = dict["status"] as? String,
-                    status != "Declined"
+                    let status = dict["status"] as? String
                 else { continue }
 
                 let bookingId: String = dict["bookingId"] as? String ?? child.key
@@ -87,6 +88,8 @@ class MySessionsViewModel: ObservableObject {
 
                 if status == "Completed" {
                     completedItems.append(sessionItem)
+                } else if status == "Declined" {
+                    declinedItems.append(sessionItem)
                 } else {
                     activeItems.append(sessionItem)
                 }
@@ -94,6 +97,7 @@ class MySessionsViewModel: ObservableObject {
 
             self.activeSessions = activeItems
             self.completedSessions = completedItems
+            self.declinedSessions = declinedItems
 
         } catch {
             self.errorMessage = "Failed to load sessions: \(error.localizedDescription)"

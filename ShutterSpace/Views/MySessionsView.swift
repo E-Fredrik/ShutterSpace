@@ -16,7 +16,9 @@ struct MySessionsView: View {
             Group {
                 if viewModel.isLoading {
                     renderLoadingState()
-                } else if viewModel.activeSessions.isEmpty && viewModel.completedSessions.isEmpty {
+                } else if viewModel.activeSessions.isEmpty
+                    && viewModel.completedSessions.isEmpty
+                    && viewModel.declinedSessions.isEmpty {
                     renderEmptyState()
                 } else {
                     renderSessionsList()
@@ -91,6 +93,13 @@ struct MySessionsView: View {
                         SessionRowView(session: session) {
                             selectedSessionForReview = session
                         }
+                    }
+                }
+
+                if !viewModel.declinedSessions.isEmpty {
+                    renderSectionHeader(title: "Declined Sessions", iconName: "xmark.circle.fill")
+                    ForEach(viewModel.declinedSessions) { session in
+                        SessionRowView(session: session, onLeaveReview: nil)
                     }
                 }
             }
