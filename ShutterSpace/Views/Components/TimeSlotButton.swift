@@ -8,13 +8,10 @@
 import SwiftUI
 
 struct TimeSlotButton: View {
-    
-    // MARK: - Properties
     let time: String
     let isSelected: Bool
     let action: () -> Void
     
-    // MARK: - Body
     var body: some View {
         Button(action: action) {
             Text(time)

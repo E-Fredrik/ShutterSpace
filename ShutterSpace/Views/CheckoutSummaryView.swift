@@ -8,8 +8,6 @@
 import SwiftUI
 
 struct CheckoutSummaryView: View {
-    
-    // MARK: - Properties
     let packageTitle: String
     let packagePrice: Double
     let platformFee: Double
@@ -17,7 +15,6 @@ struct CheckoutSummaryView: View {
     let isProcessing: Bool
     let payAction: () -> Void
     
-    // MARK: - Body
     var body: some View {
         VStack(spacing: 16) {
             Divider()
