@@ -11,32 +11,27 @@ import FirebaseDatabase
 
 @MainActor
 class BookingViewModel: ObservableObject {
-    
-    // MARK: - Properties
     @Published var selectedDate: Date = Date()
     @Published var selectedTimeSlot: String?
     @Published var selectedPackage: ServicePackage?
     @Published var packages: [ServicePackage] = []
     
-    // Dummy data
     @Published var availableTimeSlots: [String] = ["9:00 AM", "12:00 PM", "1:30 PM", "4:30 PM"]
     @Published var isBookingInProgress: Bool = false
     @Published var bookingComplete: Bool = false
     
     let platformFee: Double = 12.00
     let photographerId: String
-    let clientId: String = "client_001"
+    var clientId: String {
+        UserDefaults.standard.string(forKey: "currentUserId") ?? ""
+    }
     
     private let databaseRef = Database.database().reference()
     
-    // MARK: - Lifecycle
     init(photographerId: String) {
         self.photographerId = photographerId
     }
     
-    // MARK: - Public Methods
-    
-    /// Fetches the available service packages for the designated photographer from Firebase.
     func fetchPackages() async {
         do {
             let snapshot = try await databaseRef.child("servicePackages").child(photographerId).getData()
@@ -56,27 +51,22 @@ class BookingViewModel: ObservableObject {
         }
     }
     
-    /// Registers the user's selection of a specific time slot.
     func selectTimeSlot(_ time: String) {
         self.selectedTimeSlot = time
     }
     
-    /// Registers the user's selection of a service package.
     func selectPackage(_ package: ServicePackage) {
         self.selectedPackage = package
     }
     
-    /// Calculates the subtotal cost derived from the selected service package.
     func calculateSubtotal() -> Double {
         return selectedPackage?.price ?? 0.0
     }
     
-    /// Calculates the final total cost by adding the platform fee to the subtotal.
     func calculateFinalTotal() -> Double {
         return calculateSubtotal() + platformFee
     }
     
-    /// Assembles the booking details and writes the new record to the Firebase Realtime Database.
     func createBooking() async {
         guard let package = selectedPackage, let timeSlot = selectedTimeSlot else { return }
         

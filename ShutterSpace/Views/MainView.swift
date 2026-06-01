@@ -15,6 +15,13 @@ struct MainView: View {
                     Image(systemName: "magnifyingglass")
                     Text("Discover")
                 }
+
+            MySessionsView()
+                .tabItem {
+                    Image(systemName: "calendar.badge.clock")
+                    Text("My Sessions")
+                }
+
             UserProfileView()
                 .tabItem {
                     Image(systemName: "person.crop.circle")

@@ -19,4 +19,5 @@ struct Booking: Identifiable, Codable {
     
     var date: String?
     var timeSlot: String?
+    var resultsLink: String?
 }
