@@ -19,8 +19,9 @@ class BookingViewModel: ObservableObject {
     @Published var availableTimeSlots: [String] = ["9:00 AM", "12:00 PM", "1:30 PM", "4:30 PM"]
     @Published var isBookingInProgress: Bool = false
     @Published var bookingComplete: Bool = false
+    @Published var paymentErrorMessage: String? = nil
     
-    let platformFee: Double = 12.00
+    let platformFee: Double = 15000.0
     let photographerId: String
     var clientId: String {
         UserDefaults.standard.string(forKey: "currentUserId") ?? ""
@@ -67,10 +68,32 @@ class BookingViewModel: ObservableObject {
         return calculateSubtotal() + platformFee
     }
     
-    func createBooking() async {
-        guard let package = selectedPackage, let timeSlot = selectedTimeSlot else { return }
-        
+    func processPaymentAndBook(cardNumber: String, expMonth: String, expYear: String, cvv: String) async throws {
         isBookingInProgress = true
+        paymentErrorMessage = nil
+        
+        do {
+            let paymentToken = try await XenditManager.shared.createToken(
+                cardNumber: cardNumber,
+                expMonth: expMonth,
+                expYear: expYear,
+                cvv: cvv
+            )
+            
+            await createBooking(paymentTokenId: paymentToken)
+            
+            self.bookingComplete = true
+        } catch {
+            self.paymentErrorMessage = "Payment failed: Check your card details and try again."
+            isBookingInProgress = false
+            throw error
+        }
+        
+        isBookingInProgress = false
+    }
+    
+    private func createBooking(paymentTokenId: String) async {
+        guard let package = selectedPackage, let timeSlot = selectedTimeSlot else { return }
         
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyy-MM-dd"
@@ -84,7 +107,8 @@ class BookingViewModel: ObservableObject {
             "photographerId": photographerId,
             "clientId": clientId,
             "packageId": package.packageId,
-            "status": "Pending",
+            "status": "Paid",
+            "paymentTokenId": paymentTokenId, 
             "totalCost": total,
             "date": dateString,
             "timeSlot": timeSlot
@@ -92,11 +116,8 @@ class BookingViewModel: ObservableObject {
         
         do {
             try await databaseRef.child("bookings").child(newBookingId).setValue(bookingData)
-            self.bookingComplete = true
         } catch {
-            print("Failed to save booking: \(error.localizedDescription)")
+            self.paymentErrorMessage = "Database Error: Could not finalize booking."
         }
-        
-        isBookingInProgress = false
     }
 }

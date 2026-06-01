@@ -24,21 +24,21 @@ struct CheckoutSummaryView: View {
                 Text(packageTitle)
                     .foregroundColor(.secondary)
                 Spacer()
-                Text("$\(String(format: "%.2f", packagePrice))")
+                Text("Rp \(String(format: "%.0f", packagePrice))")
             }
             
             HStack {
                 Text("Platform Fee")
                     .foregroundColor(.secondary)
                 Spacer()
-                Text("$\(String(format: "%.2f", platformFee))")
+                Text("Rp \(String(format: "%.0f", platformFee))")
             }
             
             HStack {
                 Text("Total")
                     .font(.headline)
                 Spacer()
-                Text("$\(String(format: "%.2f", totalCost))")
+                Text("Rp \(String(format: "%.0f", totalCost))")
                     .font(.headline)
             }
             .padding(.top, 4)
@@ -48,7 +48,7 @@ struct CheckoutSummaryView: View {
                     ProgressView()
                         .progressViewStyle(CircularProgressViewStyle(tint: .black))
                 } else {
-                    Text("Pay")
+                    Text("Proceed to Payment")
                         .font(.headline)
                         .foregroundColor(.black)
                 }

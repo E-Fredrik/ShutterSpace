@@ -1,5 +1,5 @@
 //
-//  BookSesionView.swift
+//  BookSessionView.swift
 //  ShutterSpace
 //
 //  Created by Sean tandjaja on 31/05/26.
@@ -12,6 +12,8 @@ struct BookSessionView: View {
     // MARK: - Properties
     @StateObject private var viewModel: BookingViewModel
     @Environment(\.dismiss) private var dismissView
+    
+    @State private var isShowingPayment = false
     
     // MARK: - Lifecycle
     init(photographerId: String) {
@@ -44,6 +46,10 @@ struct BookSessionView: View {
         } message: {
             Text("Your session has been successfully booked.")
         }
+        // NEW: Attach the Payment Sheet
+        .sheet(isPresented: $isShowingPayment) {
+            PaymentView(viewModel: viewModel)
+        }
         .preferredColorScheme(.dark)
     }
     
@@ -55,7 +61,6 @@ struct BookSessionView: View {
             Text("Select Date")
                 .font(.headline)
             
-            // Added 'in: Date()...' to prevent selecting dates in the past
             DatePicker("Select Date", selection: $viewModel.selectedDate, in: Date()..., displayedComponents: .date)
                 .datePickerStyle(.graphical)
                 .background(Color(UIColor.secondarySystemBackground))
@@ -105,18 +110,16 @@ struct BookSessionView: View {
         }
     }
     
-    /// Renders the summary of costs and the final payment trigger.
+    /// Renders the summary of costs and triggers the payment sheet.
     private func renderCheckoutSummarySection() -> some View {
         CheckoutSummaryView(
             packageTitle: viewModel.selectedPackage?.title ?? "",
             packagePrice: viewModel.calculateSubtotal(),
             platformFee: viewModel.platformFee,
             totalCost: viewModel.calculateFinalTotal(),
-            isProcessing: viewModel.isBookingInProgress,
+            isProcessing: false,
             payAction: {
-                Task {
-                    await viewModel.createBooking()
-                }
+                isShowingPayment = true
             }
         )
     }
