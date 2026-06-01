@@ -6,5 +6,9 @@
 	<string>$(CLOUDINARY_CLOUD_NAME)</string>
 	<key>CloudinaryUploadPreset</key>
 	<string>$(CLOUDINARY_UPLOAD_PRESET)</string>
+	<key>MIDTRANS_SERVER_KEY</key>
+	<string>$(MIDTRANS_SERVER_KEY)</string>
+	<key>MIDTRANS_CLIENT_KEY</key>
+	<string>$(MIDTRANS_CLIENT_KEY)</string>
 </dict>
 </plist>

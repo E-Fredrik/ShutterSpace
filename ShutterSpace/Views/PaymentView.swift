@@ -7,43 +7,32 @@
 
 import SwiftUI
 
+struct PaymentURLWrapper: Identifiable {
+    let id = UUID()
+    let url: URL
+}
+
 struct PaymentView: View {
     @Environment(\.dismiss) var dismiss
     @ObservedObject var viewModel: BookingViewModel
     
-    @State private var cardName: String = ""
-    @State private var cardNumber: String = ""
-    @State private var expMonth: String = ""
-    @State private var expYear: String = ""
-    @State private var cvv: String = ""
+    @State private var firstName: String = ""
+    @State private var lastName: String = ""
+    @State private var email: String = ""
+
+    @State private var snapUrlWrapper: PaymentURLWrapper? = nil
     
     var body: some View {
         NavigationStack {
             Form {
-                Section(header: Text("Card Details"), footer: Text("Secure payment processing powered by Xendit.")) {
-                    TextField("Cardholder Name", text: $cardName)
-                        .textContentType(.name)
-                    
-                    TextField("Card Number", text: $cardNumber)
-                        .keyboardType(.numberPad)
-                        .textContentType(.creditCardNumber)
-                    
-                    HStack {
-                        TextField("MM", text: $expMonth)
-                            .keyboardType(.numberPad)
-                            .frame(maxWidth: 60)
-                        
-                        Divider()
-                        
-                        TextField("YY", text: $expYear)
-                            .keyboardType(.numberPad)
-                            .frame(maxWidth: 60)
-                        
-                        Divider()
-                        
-                        TextField("CVV", text: $cvv)
-                            .keyboardType(.numberPad)
-                    }
+                Section(header: Text("Customer Details"), footer: Text("You will be redirected to Midtrans to securely complete your payment.")) {
+                    TextField("First Name", text: $firstName)
+                        .textContentType(.givenName)
+                    TextField("Last Name", text: $lastName)
+                        .textContentType(.familyName)
+                    TextField("Email Address", text: $email)
+                        .keyboardType(.emailAddress)
+                        .autocapitalization(.none)
                 }
                 
                 if let errorMessage = viewModel.paymentErrorMessage {
@@ -58,17 +47,14 @@ struct PaymentView: View {
                     Button {
                         Task {
                             do {
-                                try await viewModel.processPaymentAndBook(
-                                    cardName: cardName,
-                                    cardNumber: cardNumber,
-                                    expMonth: expMonth,
-                                    expYear: expYear,
-                                    cvv: cvv
+                                // Generate the URL and trigger the WebView
+                                let url = try await viewModel.setupMidtransPayment(
+                                    firstName: firstName,
+                                    lastName: lastName,
+                                    email: email
                                 )
-                                dismiss()
-                            } catch {
-                                // Error handled via publisher
-                            }
+                                self.snapUrlWrapper = PaymentURLWrapper(url: url)
+                            } catch {}
                         }
                     } label: {
                         HStack {
@@ -76,16 +62,16 @@ struct PaymentView: View {
                             if viewModel.isBookingInProgress {
                                 ProgressView()
                             } else {
-                                Text("Pay Rp \(String(format: "%.0f", viewModel.calculateFinalTotal()))")
+                                Text("Proceed to Payment (Rp \(String(format: "%.0f", viewModel.calculateFinalTotal())))")
                                     .fontWeight(.bold)
                             }
                             Spacer()
                         }
                     }
-                    .disabled(viewModel.isBookingInProgress || cardName.isEmpty || cardNumber.isEmpty || expMonth.isEmpty || expYear.isEmpty || cvv.isEmpty)
+                    .disabled(viewModel.isBookingInProgress || firstName.isEmpty || lastName.isEmpty || email.isEmpty)
                 }
             }
-            .navigationTitle("Secure Checkout")
+            .navigationTitle("Checkout")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
@@ -93,6 +79,15 @@ struct PaymentView: View {
                 }
             }
             .preferredColorScheme(.dark)
+            .fullScreenCover(item: $snapUrlWrapper, onDismiss: {
+                viewModel.markBookingAsPaid()
+                dismiss()
+            }) { wrapper in
+                MidtransSafariView(url: wrapper.url, onDismiss: {
+                    self.snapUrlWrapper = nil
+                })
+                .ignoresSafeArea()
+            }
         }
     }
 }

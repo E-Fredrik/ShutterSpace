@@ -147,7 +147,7 @@ struct DashboardView: View {
 
     private func renderAcceptedSessions() -> some View {
         VStack(alignment: .leading, spacing: 16) {
-            Text("Accepted Sessions")
+            Text("Upcoming Gigs")
                 .font(.title3)
                 .fontWeight(.bold)
 
@@ -155,17 +155,25 @@ struct DashboardView: View {
                 ProgressView()
                     .frame(maxWidth: .infinity, alignment: .center)
             } else if viewModel.acceptedSessions.isEmpty {
-                Text("No accepted sessions pending completion.")
+                Text("No upcoming gigs.")
                     .foregroundColor(.secondary)
                     .frame(maxWidth: .infinity, alignment: .center)
                     .padding()
             } else {
                 ForEach(viewModel.acceptedSessions) { session in
-                    AcceptedSessionRowView(session: session) {
-                        resultsLinkInput = ""
-                        sessionToComplete = session
-                        isShowingCompleteSheet = true
-                    }
+                    
+                    AcceptedSessionRowView(
+                        session: session,
+                        onMarkCompleted: {
+                    
+                            Task {
+                                await viewModel.markSessionAsCompleted(
+                                    bookingId: session.id,
+                                    totalCost: session.totalCost
+                                )
+                            }
+                        }
+                    )
                 }
             }
         }
@@ -211,7 +219,7 @@ struct DashboardView: View {
                         Task {
                             await viewModel.markSessionAsCompleted(
                                 bookingId: session.bookingId,
-                                resultsLink: resultsLinkInput
+                                totalCost: session.totalCost,
                             )
                         }
                     }

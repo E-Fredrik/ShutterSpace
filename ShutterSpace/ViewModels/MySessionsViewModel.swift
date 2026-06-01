@@ -201,4 +201,7 @@ class MySessionsViewModel: ObservableObject {
             print("Error recalculating rating: \(error.localizedDescription)")
         }
     }
+    
+    
+    
 }
