@@ -5,6 +5,7 @@
 //  Created by Elifele Fredrik on 28/05/26.
 //
 
+import SwiftUI
 import Combine
 import FirebaseDatabase
 import Foundation
@@ -76,14 +77,16 @@ class ManagePortfolioViewModel: ObservableObject {
     func addNewPackage(
         packageTitle: String,
         packagePrice: Double,
-        packageDeliverables: String
+        packageDeliverables: String,
+        packageDuration: String
     ) {
         let newPackageId = UUID().uuidString
         let newlyCreatedPackage = ServicePackage(
             packageId: newPackageId,
             title: packageTitle,
             price: packagePrice,
-            deliverables: packageDeliverables
+            deliverables: packageDeliverables,
+            duration: packageDuration
         )
 
         self.servicePackage.append(newlyCreatedPackage)
@@ -96,6 +99,33 @@ class ManagePortfolioViewModel: ObservableObject {
                 photographerId
             ).child(newPackageId).setValue(dict)
         }
+    }
+    
+    func updatePackage(editedPackage: ServicePackage) {
+        if let index = servicePackage.firstIndex(where: { $0.packageId == editedPackage.packageId }) {
+            servicePackage[index] = editedPackage
+        }
+        
+        if let encodedData = try? JSONEncoder().encode(editedPackage),
+           let dict = try? JSONSerialization.jsonObject(with: encodedData) as? [String: Any] {
+            
+            databaseRef.child("servicePackages")
+                .child(photographerId)
+                .child(editedPackage.packageId)
+                .setValue(dict)
+        }
+    }
+    
+    func deletePackage(at offsets: IndexSet) {
+        for index in offsets {
+            let packageToDelete = servicePackage[index]
+            databaseRef.child("servicePackages")
+                .child(photographerId)
+                .child(packageToDelete.packageId)
+                .removeValue()
+        }
+        
+        servicePackage.remove(atOffsets: offsets)
     }
 
     func processImageSelection(pickerItem: PhotosPickerItem?) {

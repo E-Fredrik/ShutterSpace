@@ -10,13 +10,21 @@ import SwiftUI
 struct ContentView: View {
     
     @AppStorage("currentUserId") private var currentUserId: String = ""
+    @AppStorage("currentUserRole") private var currentUserRole: String = ""
     
     var body: some View {
-        if currentUserId.isEmpty {
-            LoginView()
-        } else {
-            MainView()
+        Group {
+            if currentUserId.isEmpty {
+                LoginView()
+            } else {
+                if currentUserRole == "Photographer" {
+                    DashboardView()
+                } else {
+                    MainView()
+                }
+            }
         }
+        .animation(.easeInOut, value: currentUserId)
     }
 }
 

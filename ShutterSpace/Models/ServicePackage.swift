@@ -13,5 +13,6 @@ struct ServicePackage: Identifiable, Codable {
     let title: String
     let price: Double
     let deliverables: String
+    let duration: String
 }
 

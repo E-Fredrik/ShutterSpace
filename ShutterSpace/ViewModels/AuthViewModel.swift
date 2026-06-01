@@ -153,6 +153,14 @@ class AuthViewModel: ObservableObject {
 
         isLoading = false
     }
+    func logout() {
+        UserDefaults.standard.removeObject(forKey: "currentUserId")
+        UserDefaults.standard.removeObject(forKey: "currentUserRole")
+        
+        self.isAuthenticated = false
+        self.emailInput = ""
+        self.accessCodeInput = ""
+    }
 
     func processImageSelection(item: PhotosPickerItem?) {
         guard let item = item else { return }

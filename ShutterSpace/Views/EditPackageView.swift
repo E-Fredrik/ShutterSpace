@@ -1,22 +1,22 @@
 //
-//  AddPackageView.swift
+//  EditPackageView.swift
 //  ShutterSpace
 //
-//  Created by Elifele Fredrik on 28/05/26.
+//  Created by Sean tandjaja on 01/06/26.
 //
 
 import SwiftUI
 
-struct AddPackageView: View {
-    
+struct EditPackageView: View {
     @Environment(\.dismiss) var dismissView
     @ObservedObject var portfolioViewModel: ManagePortfolioViewModel
-    
+    var packageToEdit: ServicePackage
+
     @State private var packageTitleInput: String = ""
     @State private var packagePriceInput: String = ""
     @State private var packageDurationInput: String = ""
     @State private var packageDeliverablesInput: String = ""
-    
+
     var body: some View {
         NavigationStack {
             Form {
@@ -28,8 +28,14 @@ struct AddPackageView: View {
                     TextField("Deliverables/Description", text: $packageDeliverablesInput)
                 }
             }
-            .navigationTitle("New Package")
+            .navigationTitle("Edit Package")
             .navigationBarTitleDisplayMode(.inline)
+            .onAppear {
+                self.packageTitleInput = self.packageToEdit.title
+                self.packagePriceInput = String(self.packageToEdit.price)
+                self.packageDurationInput = self.packageToEdit.duration
+                self.packageDeliverablesInput = self.packageToEdit.deliverables
+            }
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button("Cancel") {
@@ -40,23 +46,21 @@ struct AddPackageView: View {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Save") {
                         if let parsedPrice: Double = Double(packagePriceInput) {
-                            portfolioViewModel
-                                .addNewPackage(
-                                    packageTitle: packageTitleInput,
-                                    packagePrice: parsedPrice,
-                                    packageDeliverables: packageDeliverablesInput,
-                                    packageDuration: packageDurationInput
-                                )
+                            let editedPackage = ServicePackage(
+                                packageId: packageToEdit.packageId,
+                                title: packageTitleInput,
+                                price: parsedPrice,
+                                deliverables: packageDeliverablesInput,
+                                duration: packageDurationInput
+                            )
+                            portfolioViewModel.updatePackage(editedPackage: editedPackage)
                             dismissView()
                         }
-                    }.disabled(packageTitleInput.isEmpty || packagePriceInput.isEmpty || packageDeliverablesInput.isEmpty || packageDurationInput.isEmpty)
+                    }
+                    .disabled(packageTitleInput.isEmpty || packagePriceInput.isEmpty || packageDeliverablesInput.isEmpty || packageDurationInput.isEmpty)
                 }
             }
             .preferredColorScheme(.dark)
         }
     }
-}
-
-#Preview {
-    AddPackageView(portfolioViewModel: ManagePortfolioViewModel())
 }

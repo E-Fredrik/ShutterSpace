@@ -14,6 +14,7 @@ struct ManagePortfolioView: View {
         ManagePortfolioViewModel()
     @State private var selectedTabDisplay: Int = 0
     @State private var isShowingAddPackageSheet: Bool = false
+    @State private var packageToEdit: ServicePackage? = nil
 
     var body: some View {
         NavigationStack {
@@ -38,6 +39,9 @@ struct ManagePortfolioView: View {
             }
             .sheet(isPresented: $isShowingAddPackageSheet) {
                 AddPackageView(portfolioViewModel: portfolioViewModel)
+            }
+            .sheet(item: $packageToEdit) { package in
+                EditPackageView(portfolioViewModel: portfolioViewModel, packageToEdit: package)
             }
             .preferredColorScheme(.dark)
         }
@@ -123,9 +127,14 @@ extension ManagePortfolioView {
     func renderPackagesList() -> some View {
         List {
             ForEach(portfolioViewModel.servicePackage) { servicePackage in
-                PackageRowView(activeServicePackage: servicePackage)
-                    .listRowBackground(Color.clear)
+                Button(action: {
+                    self.packageToEdit = servicePackage
+                }) {
+                    PackageRowView(activeServicePackage: servicePackage)
+                }
+                .listRowBackground(Color.clear)
             }
+            .onDelete(perform: portfolioViewModel.deletePackage)
         }
         .listStyle(PlainListStyle())
         .safeAreaInset(edge: .bottom) {

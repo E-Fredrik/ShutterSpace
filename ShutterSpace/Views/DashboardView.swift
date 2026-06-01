@@ -9,11 +9,12 @@ import SwiftUI
 
 struct DashboardView: View {
     @StateObject private var viewModel = DashboardViewModel()
+    @StateObject private var authViewModel = AuthViewModel()
     
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(spacing: 24) {
+                VStack(alignment: .leading, spacing: 24) {
                     renderActionCards()
                     renderStatCards()
                     renderPendingRequests()
@@ -24,8 +25,23 @@ struct DashboardView: View {
             .navigationBarTitleDisplayMode(.large)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Image(systemName: "gearshape")
-                        .foregroundColor(.primary)
+                    Menu {
+                        Button(action: {
+                            // Navigate to settings view
+                        }) {
+                            Label("Settings", systemImage: "gear")
+                        }
+                        
+                        Button(role: .destructive, action: {
+                            authViewModel.logout()
+                        }) {
+                            Label("Log Out", systemImage: "rectangle.portrait.and.arrow.right")
+                        }
+                    } label: {
+                        Image(systemName: "gearshape")
+                            .foregroundColor(.primary)
+                            .padding(8)
+                    }
                 }
             }
             .task {
@@ -38,7 +54,6 @@ struct DashboardView: View {
         }
     }
     
-    /// Renders the top navigation buttons for managing portfolio and packages.
     private func renderActionCards() -> some View {
         HStack(spacing: 16) {
             NavigationLink(destination: ManagePortfolioView()) {
@@ -46,15 +61,13 @@ struct DashboardView: View {
             }
             .buttonStyle(PlainButtonStyle())
             
-            // Utilizing an existing view based on the repo tree provided
-//            NavigationLink(destination: AddPackageView()) {
-//                ActionCardView(title: "Manage\nPackages", iconName: "shippingbox")
-//            }
+            NavigationLink(destination: AddPackageView(portfolioViewModel: ManagePortfolioViewModel())) {
+                ActionCardView(title: "Manage\nPackages", iconName: "shippingbox")
+            }
             .buttonStyle(PlainButtonStyle())
         }
     }
     
-    /// Renders the statistics overview.
     private func renderStatCards() -> some View {
         HStack(spacing: 16) {
             StatCardView(
@@ -69,7 +82,6 @@ struct DashboardView: View {
         }
     }
     
-    /// Renders the list of pending booking requests.
     private func renderPendingRequests() -> some View {
         VStack(alignment: .leading, spacing: 16) {
             Text("Pending Requests")

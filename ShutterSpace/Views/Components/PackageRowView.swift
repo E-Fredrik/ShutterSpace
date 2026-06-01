@@ -15,11 +15,18 @@ struct PackageRowView: View {
             HStack {
                 Text(activeServicePackage.title)
                     .font(.headline)
+                
                 Spacer()
 
-                Text("$\(String(format: "%.2f", activeServicePackage.price))")
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
+                VStack(alignment: .trailing, spacing: 2) {
+                    Text("$\(String(format: "%.2f", activeServicePackage.price))")
+                        .font(.subheadline)
+                        .fontWeight(.semibold)
+                    
+                    Text(activeServicePackage.duration)
+                        .font(.caption2)
+                        .foregroundColor(.secondary)
+                }
             }
 
             Text(activeServicePackage.deliverables)
@@ -37,8 +44,8 @@ struct PackageRowView: View {
             packageId: "pkg_001",
             title: "4-Hour Wedding Shoot",
             price: 480.0,
-            deliverables: "1 photographer, 200 edited photos"
+            deliverables: "1 photographer, 200 edited photos",
+            duration: "4 Hours"
         )
     )
-
 }
