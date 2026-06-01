@@ -37,7 +37,9 @@ class DashboardViewModel: ObservableObject {
     @Published var acceptedSessions: [AcceptedSession] = []
     @Published var isLoading: Bool = true
 
-    let currentUserId: String = "photo_001"
+    var currentUserId: String {
+        UserDefaults.standard.string(forKey: "currentUserId") ?? ""
+    }
     private let databaseRef = Database.database().reference()
 
     func fetchDashboardData() async {

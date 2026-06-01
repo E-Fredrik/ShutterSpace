@@ -21,7 +21,9 @@ class ManagePortfolioViewModel: ObservableObject {
     @Published var isDataLoading: Bool = false
 
     private let databaseRef = Database.database().reference()
-    private let photographerId: String = "photo_001"
+    private var photographerId: String {
+        UserDefaults.standard.string(forKey: "currentUserId") ?? ""
+    }
 
     func loadPortfolioData() async {
         isDataLoading = true
