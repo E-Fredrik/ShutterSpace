@@ -8,13 +8,20 @@
 import SwiftUI
 import Combine
 import FirebaseCore
+import FirebaseAppCheck 
 
 class AppDelegate: NSObject, UIApplicationDelegate {
-  func application(_ application: UIApplication,
-                   didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey : Any]? = nil) -> Bool {
-    FirebaseApp.configure()
-    return true
-  }
+    func application(_ application: UIApplication,
+                     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey : Any]? = nil) -> Bool {
+        
+        #if DEBUG
+        let providerFactory = AppCheckDebugProviderFactory()
+        AppCheck.setAppCheckProviderFactory(providerFactory)
+        #endif
+        
+        FirebaseApp.configure()
+        return true
+    }
 }
 
 @main
@@ -26,4 +33,3 @@ struct ShutterSpaceApp: App {
         }
     }
 }
-
