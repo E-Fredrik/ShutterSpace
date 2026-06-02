@@ -8,11 +8,10 @@
 import SwiftUI
 
 struct BrowseView: View {
-    @StateObject private var browseViewModel: BrowseViewModel =
-        BrowseViewModel()
+    @StateObject private var browseViewModel: BrowseViewModel = BrowseViewModel()
+    
     let availableCategories: [String] = [
-        "All", "Wedding", "Portrait", "Landscape", "Event", "Fashion", "Food",
-        "Travel",
+        "All", "Wedding", "Portrait", "Landscape", "Event", "Fashion", "Food", "Travel"
     ]
 
     var body: some View {
@@ -21,7 +20,8 @@ struct BrowseView: View {
                 VStack(spacing: 24) {
                     renderCategorySelector()
                     renderPhotographerGrid()
-                }.padding()
+                }
+                .padding()
             }
             .navigationTitle("Discover")
             .searchable(
@@ -30,8 +30,12 @@ struct BrowseView: View {
             )
             .task {
                 await browseViewModel.fetchPhotographers()
-            }.preferredColorScheme(.dark)
-        }.navigationTitle("Browse")
+            }
+            .refreshable {
+                await browseViewModel.fetchPhotographers()
+            }
+            .preferredColorScheme(.dark)
+        }
     }
 }
 

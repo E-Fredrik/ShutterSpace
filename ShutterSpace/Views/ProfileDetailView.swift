@@ -59,7 +59,7 @@ extension ProfileDetailView {
                 .frame(width: 100.0, height: 100.0)
                 .clipShape(Circle())
                 .padding(.top, 16.0)
-            
+
             VStack(spacing: 8.0) {
                 Text(
                     "\(photographerDetails.firstName) \(photographerDetails.lastName)"
@@ -71,10 +71,28 @@ extension ProfileDetailView {
                     .foregroundColor(.secondary)
                 HStack(spacing: 16.0) {
                     HStack(spacing: 4.0) {
-                        Image(systemName: "star.fill").foregroundColor(.yellow)
-                        Text(String(format: "%.1f", photographerDetails.rating))
+                        if photographerDetails.reviewCount == 0 {
+                            Image(systemName: "star").foregroundColor(.gray)
+                            Text("No reviews yet")
+                                .fontWeight(.medium)
+                                .foregroundColor(.secondary)
+                        } else {
+                            Image(systemName: "star.fill").foregroundColor(
+                                .yellow
+                            )
+                            Text(
+                                String(
+                                    format: "%.1f",
+                                    photographerDetails.rating
+                                )
+                            )
                             .fontWeight(.medium)
+                            Text("(\(photographerDetails.reviewCount))")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        }
                     }
+
                     HStack(spacing: 4.0) {
                         Image(systemName: "mappin.and.ellipse").foregroundColor(
                             .secondary
@@ -87,7 +105,7 @@ extension ProfileDetailView {
             }
         }
     }
-    
+
     @ViewBuilder
     private var profileImageComponent: some View {
         if photographerDetails.profileImageUrl.isEmpty {
@@ -96,7 +114,8 @@ extension ProfileDetailView {
                 .scaledToFit()
                 .foregroundColor(.secondary)
         } else {
-            AsyncImage(url: URL(string: photographerDetails.profileImageUrl)) { phase in
+            AsyncImage(url: URL(string: photographerDetails.profileImageUrl)) {
+                phase in
                 switch phase {
                 case .empty:
                     ProgressView()
@@ -115,7 +134,7 @@ extension ProfileDetailView {
             }
         }
     }
-    
+
     func renderPortfolioGrid() -> some View {
         if profileViewModel.isLoading {
             AnyView(
@@ -134,7 +153,8 @@ extension ProfileDetailView {
                     columns: [GridItem(.flexible()), GridItem(.flexible())],
                     spacing: 2.0
                 ) {
-                    ForEach(profileViewModel.portfolioImageUrls, id: \.self) { imageUrl in
+                    ForEach(profileViewModel.portfolioImageUrls, id: \.self) {
+                        imageUrl in
                         AsyncImage(url: URL(string: imageUrl)) { phase in
                             switch phase {
                             case .empty:
@@ -143,20 +163,28 @@ extension ProfileDetailView {
                                         maxWidth: .infinity,
                                         maxHeight: .infinity
                                     )
-                                    .background(Color(UIColor.tertiarySystemFill))
+                                    .background(
+                                        Color(UIColor.tertiarySystemFill)
+                                    )
                             case .success(let image):
                                 image
                                     .resizable()
                                     .aspectRatio(1.0, contentMode: .fill)
                             case .failure(_):
                                 VStack(spacing: 4.0) {
-                                    Image(systemName: "photo.badge.exclamationmark")
-                                        .foregroundColor(.gray)
+                                    Image(
+                                        systemName:
+                                            "photo.badge.exclamationmark"
+                                    )
+                                    .foregroundColor(.gray)
                                     Text("Error")
                                         .font(.caption2)
                                         .foregroundColor(.gray)
                                 }
-                                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                                .frame(
+                                    maxWidth: .infinity,
+                                    maxHeight: .infinity
+                                )
                                 .background(Color(UIColor.tertiarySystemFill))
                             @unknown default:
                                 EmptyView()
@@ -186,7 +214,8 @@ extension ProfileDetailView {
         } else {
             AnyView(
                 VStack(spacing: 0.0) {
-                    ForEach(profileViewModel.servicePackages) { currentPackage in
+                    ForEach(profileViewModel.servicePackages) {
+                        currentPackage in
                         PackageRowView(activeServicePackage: currentPackage)
                             .padding(.horizontal)
                             .padding(.vertical, 8.0)
@@ -202,7 +231,12 @@ extension ProfileDetailView {
         VStack {
             Divider()
             HStack(spacing: 16.0) {
-                NavigationLink(destination: ChatView(recipientId: photographerDetails.id, recipientName: photographerDetails.firstName)) {
+                NavigationLink(
+                    destination: ChatView(
+                        recipientId: photographerDetails.id,
+                        recipientName: photographerDetails.firstName
+                    )
+                ) {
                     Image(systemName: "message.fill")
                         .font(.title2)
                         .foregroundColor(.white)
@@ -210,8 +244,12 @@ extension ProfileDetailView {
                         .background(Color(UIColor.darkGray))
                         .clipShape(Circle())
                 }
-                
-                NavigationLink(destination: BookSessionView(photographerId: photographerDetails.id)) {
+
+                NavigationLink(
+                    destination: BookSessionView(
+                        photographerId: photographerDetails.id
+                    )
+                ) {
                     Text("Book Session")
                         .font(.headline)
                         .foregroundColor(.black)
@@ -241,7 +279,7 @@ extension ProfileDetailView {
             rating: 4.7,
             location: "San Francisco, CA",
             category: "Portrait",
-            profileImageUrl: "" // Blank to test placeholder
+            profileImageUrl: ""  // Blank to test placeholder
         )
     )
 }

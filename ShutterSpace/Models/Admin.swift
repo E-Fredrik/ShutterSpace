@@ -15,7 +15,6 @@ class Admin: User {
         firstName: String,
         lastName: String,
         email: String,
-        access_code: String,
         clearanceLevel: String
     ) {
         self.clearanceLevel = clearanceLevel

@@ -147,11 +147,12 @@ class AuthViewModel: ObservableObject {
                     ) : selectedCategory
 
                 userData["stripeAccountId"] = ""
-                userData["rating"] = 5.0
+                userData["rating"] = 0.0
+                userData["reviewCount"] = 0
                 userData["location"] = locationInput.trimmingCharacters(
                     in: .whitespacesAndNewlines
                 )
-                userData["category"] = finalCategory  // Save the selected/custom category
+                userData["category"] = finalCategory
                 userData["profileImageUrl"] = uploadedImageUrl
             } else {
                 userData["preferences"] = ""
