@@ -12,9 +12,7 @@ struct LoginView: View {
     @StateObject private var authViewModel = AuthViewModel()
 
     var body: some View {
-
         NavigationStack {
-
             VStack(spacing: 32.0) {
                 renderHeader()
                 renderForm()
@@ -48,16 +46,29 @@ extension LoginView {
 
     func renderForm() -> some View {
         VStack(spacing: 16.0) {
-            AuthTextField(
-                placeholder: "Email Address",
-                text: $authViewModel.emailInput,
-                isSecure: false
-            )
+
+            VStack(alignment: .leading, spacing: 4) {
+                AuthTextField(
+                    placeholder: "Email Address",
+                    text: $authViewModel.emailInput,
+                    isSecure: false,
+                    keyboardType: .emailAddress
+                )
+                
+                if !authViewModel.emailInput.isEmpty && !authViewModel.isValidEmail {
+                    Text("Please enter a valid email address.")
+                        .font(.caption)
+                        .foregroundColor(.red)
+                        .padding(.leading, 4)
+                }
+            }
+
             AuthTextField(
                 placeholder: "Access Code",
                 text: $authViewModel.accessCodeInput,
                 isSecure: true
             )
+
             if !authViewModel.errorMessage.isEmpty {
                 Text(authViewModel.errorMessage)
                     .font(.caption)
@@ -68,7 +79,9 @@ extension LoginView {
     }
 
     func renderActionButtons() -> some View {
-        VStack(spacing: 16.0) {
+        let isLoginDisabled = authViewModel.isLoading || !authViewModel.isValidEmail || authViewModel.accessCodeInput.isEmpty
+        
+        return VStack(spacing: 16.0) {
             Button(action: {
                 Task {
                     await authViewModel.login()
@@ -91,10 +104,9 @@ extension LoginView {
                 .background(Color.white)
                 .cornerRadius(12.0)
             }
-            .disabled(
-                authViewModel.isLoading || authViewModel.emailInput.isEmpty
-                    || authViewModel.accessCodeInput.isEmpty
-            )
+            .disabled(isLoginDisabled)
+            .opacity(isLoginDisabled ? 0.5 : 1.0)
+
             NavigationLink(
                 destination: RegisterView(authViewModel: authViewModel)
             ) {

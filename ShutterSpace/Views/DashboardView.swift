@@ -11,7 +11,7 @@ struct DashboardView: View {
     @StateObject private var viewModel = DashboardViewModel()
     @StateObject private var authViewModel = AuthViewModel()
 
-    @State private var sessionToComplete: AcceptedSession? = nil
+    @State private var sessionToComplete: DashboardSession? = nil
     @State private var isShowingCompleteSheet: Bool = false
 
     var body: some View {
@@ -69,28 +69,14 @@ struct DashboardView: View {
     }
 
     private func renderActionCards() -> some View {
-        VStack(spacing: 16) {
-            HStack(spacing: 16) {
-                NavigationLink(destination: ManagePortfolioView()) {
-                    ActionCardView(
-                        title: "Manage\nPortfolio",
-                        iconName: "photo.on.rectangle"
-                    )
-                }
-                .buttonStyle(PlainButtonStyle())
-
-                NavigationLink(
-                    destination: AddPackageView(
-                        portfolioViewModel: ManagePortfolioViewModel()
-                    )
-                ) {
-                    ActionCardView(
-                        title: "Manage\nPackages",
-                        iconName: "shippingbox"
-                    )
-                }
-                .buttonStyle(PlainButtonStyle())
+        HStack(spacing: 16) {
+            NavigationLink(destination: ManagePortfolioView()) {
+                ActionCardView(
+                    title: "Portfolio &\nPackages",
+                    iconName: "photo.on.rectangle"
+                )
             }
+            .buttonStyle(PlainButtonStyle())
 
             NavigationLink(destination: ManageAvailabilityView()) {
                 ActionCardView(
@@ -102,10 +88,8 @@ struct DashboardView: View {
         }
     }
 
-
     private func renderStatCards() -> some View {
-        HStack(spacing: 16) {
-            // FIX: Changed from dollarsign to banknote, and $ to Rp
+        VStack(spacing: 16) {
             StatCardView(
                 iconName: "banknote.fill",
                 value: "Rp \(String(format: "%.0f", viewModel.totalEarnings))"
@@ -134,8 +118,8 @@ struct DashboardView: View {
                     .padding()
             } else {
                 ForEach(viewModel.pendingRequests) { request in
-                    PendingRequestRowView(
-                        request: request,
+                    DashboardSessionRowView(
+                        session: request,
                         onAccept: {
                             Task {
                                 await viewModel.acceptBooking(
@@ -172,11 +156,9 @@ struct DashboardView: View {
                     .padding()
             } else {
                 ForEach(viewModel.acceptedSessions) { session in
-                    
-                    AcceptedSessionRowView(
+                    DashboardSessionRowView(
                         session: session,
                         onMarkCompleted: {
-                            // Automatically triggers the complete sheet
                             self.sessionToComplete = session
                             self.isShowingCompleteSheet = true
                         }

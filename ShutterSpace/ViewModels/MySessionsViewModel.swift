@@ -9,20 +9,6 @@ import Foundation
 import Combine
 import FirebaseDatabase
 
-struct SessionItem: Identifiable {
-    let id: String
-    let bookingId: String
-    let photographerId: String
-    let photographerName: String
-    let packageTitle: String
-    let totalCost: Double
-    let date: String
-    let timeSlot: String
-    let status: String
-    let resultsLink: String?
-    let hasBeenReviewed: Bool
-}
-
 @MainActor
 class MySessionsViewModel: ObservableObject {
     @Published var activeSessions: [SessionItem] = []

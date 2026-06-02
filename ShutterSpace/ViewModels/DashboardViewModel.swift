@@ -9,32 +9,13 @@ import Combine
 import FirebaseDatabase
 import Foundation
 
-struct PendingRequest: Identifiable {
-    let id: String
-    let clientName: String
-    let packageTitle: String
-    let totalCost: Double
-    let date: String
-    let timeSlot: String
-}
-
-struct AcceptedSession: Identifiable {
-    let id: String
-    let bookingId: String
-    let clientName: String
-    let packageTitle: String
-    let totalCost: Double
-    let date: String
-    let timeSlot: String
-}
-
 @MainActor
 class DashboardViewModel: ObservableObject {
     @Published var photographerName: String = "Loading..."
     @Published var totalEarnings: Double = 0.0
     @Published var totalSessions: Int = 0
-    @Published var pendingRequests: [PendingRequest] = []
-    @Published var acceptedSessions: [AcceptedSession] = []
+    @Published var pendingRequests: [DashboardSession] = []
+    @Published var acceptedSessions: [DashboardSession] = []
     @Published var isLoading: Bool = true
 
     var currentUserId: String {
@@ -82,14 +63,11 @@ class DashboardViewModel: ObservableObject {
         }
     }
 
-    
-
-    
     func markSessionAsCompleted(bookingId: String, totalCost: Double) async {
         isLoading = true
 
         do {
-            
+
             let bookingUpdates: [String: Any] = [
                 "status": "Completed",
                 "paymentStatus": "Released to Photographer",
@@ -97,7 +75,6 @@ class DashboardViewModel: ObservableObject {
             try await databaseRef.child("bookings").child(bookingId)
                 .updateChildValues(bookingUpdates)
 
-            
             let platformFee = 15000.0
             let photographerCut = totalCost - platformFee
 
@@ -107,14 +84,12 @@ class DashboardViewModel: ObservableObject {
                 currentUserId
             ).child("totalEarnings")
 
-            
             let snapshot = try await earningsRef.getData()
             let currentEarnings = snapshot.value as? Double ?? 0.0
             let newTotalEarnings = currentEarnings + photographerCut
 
             try await earningsRef.setValue(newTotalEarnings)
 
-            
             await fetchDashboardData()
 
         } catch {
@@ -148,8 +123,8 @@ class DashboardViewModel: ObservableObject {
 
             var earnings: Double = 0
             var sessions: Int = 0
-            var requests: [PendingRequest] = []
-            var accepted: [AcceptedSession] = []
+            var requests: [DashboardSession] = []
+            var accepted: [DashboardSession] = []
 
             for child in children {
                 guard let dict = child.value as? [String: Any],
@@ -169,45 +144,38 @@ class DashboardViewModel: ObservableObject {
                 if status == "Completed" {
                     earnings += cost
                     sessions += 1
-                } else if status == "Accepted" {
-                    earnings += cost
-                    sessions += 1
+                } else if status == "Accepted" || status == "Pending" {
+
+                    if status == "Accepted" {
+                        earnings += cost
+                        sessions += 1
+                    }
+
                     let clientName: String = await fetchClientName(
                         clientId: clientId
                     )
                     let packageTitle: String = await fetchPackageTitle(
                         packageId: packageId
                     )
-                    let session = AcceptedSession(
+
+                    let session = DashboardSession(
                         id: bookingId,
                         bookingId: bookingId,
                         clientName: clientName,
                         packageTitle: packageTitle,
                         totalCost: cost,
                         date: date,
-                        timeSlot: timeSlot
-                    )
-                    accepted.append(session)
-                } else if status == "Pending" {
-                    let clientName: String = await fetchClientName(
-                        clientId: clientId
-                    )
-                    let packageTitle: String = await fetchPackageTitle(
-                        packageId: packageId
+                        timeSlot: timeSlot,
+                        status: status
                     )
 
-                    let request = PendingRequest(
-                        id: bookingId,
-                        clientName: clientName,
-                        packageTitle: packageTitle,
-                        totalCost: cost,
-                        date: date,
-                        timeSlot: timeSlot
-                    )
-                    requests.append(request)
+                    if status == "Accepted" {
+                        accepted.append(session)
+                    } else if status == "Pending" {
+                        requests.append(session)
+                    }
                 }
             }
-
             self.totalEarnings = earnings
             self.totalSessions = sessions
             self.pendingRequests = requests

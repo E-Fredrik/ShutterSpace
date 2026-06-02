@@ -9,12 +9,9 @@ import SwiftUI
 
 struct ManageAvailabilityView: View {
 
-    // MARK: - Properties
-
     @StateObject private var viewModel: ManageAvailabilityViewModel = ManageAvailabilityViewModel()
-    @FocusState private var isInputFocused: Bool
-
-    // MARK: - Body
+    
+    @State private var selectedTime: Date = Date()
 
     var body: some View {
         NavigationStack {
@@ -33,8 +30,6 @@ struct ManageAvailabilityView: View {
             .preferredColorScheme(.dark)
         }
     }
-
-    // MARK: - Sub-views
 
     private func renderLoadingState() -> some View {
         VStack(spacing: 16) {
@@ -60,20 +55,31 @@ struct ManageAvailabilityView: View {
         Section {
             VStack(alignment: .leading, spacing: 10) {
                 HStack {
-                    TextField("e.g. 9:00 AM", text: $viewModel.newTimeSlotInput)
-                        .focused($isInputFocused)
-                        .autocapitalization(.none)
-                        .disableAutocorrection(true)
+                    Text("Time")
+                        .foregroundColor(.primary)
+                    
+                    Spacer()
+                    
+                    DatePicker(
+                        "Select Time",
+                        selection: $selectedTime,
+                        displayedComponents: .hourAndMinute
+                    )
+                    .labelsHidden()
+                    .datePickerStyle(.compact)
 
                     Button {
-                        isInputFocused = false
+                        let formatter = DateFormatter()
+                        formatter.dateFormat = "H:mm"
+                        viewModel.newTimeSlotInput = formatter.string(from: selectedTime)
+                        
                         Task { await viewModel.addTimeSlot() }
                     } label: {
                         Image(systemName: "plus.circle.fill")
                             .font(.title2)
                             .foregroundColor(.white)
+                            .padding(.leading, 8)
                     }
-                    .disabled(viewModel.newTimeSlotInput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                 }
 
                 if viewModel.shouldShowDuplicateError {
@@ -88,7 +94,7 @@ struct ManageAvailabilityView: View {
         } header: {
             Text("Add Time Slot")
         } footer: {
-            Text("Type the time in any format (e.g. 9:00 AM, 14:00) and tap + to add it.")
+            Text("Select a time using the picker and tap + to add it.")
                 .font(.caption)
         }
     }

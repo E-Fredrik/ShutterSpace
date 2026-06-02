@@ -11,6 +11,7 @@ struct AuthTextField: View {
     let placeholder: String
     @Binding var text: String
     let isSecure: Bool
+    var keyboardType: UIKeyboardType = .default
     
     var body: some View {
         Group {
@@ -26,9 +27,10 @@ struct AuthTextField: View {
         .font(.body)
         .autocapitalization(.none)
         .disableAutocorrection(true)
+        .keyboardType(keyboardType)
     }
 }
 
 #Preview {
-    AuthTextField(placeholder: "", text: .constant(""), isSecure: true)
+    AuthTextField(placeholder: "Email", text: .constant(""), isSecure: false, keyboardType: .emailAddress)
 }
