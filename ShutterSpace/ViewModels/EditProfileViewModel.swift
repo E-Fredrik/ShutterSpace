@@ -17,7 +17,8 @@ class EditProfileViewModel: ObservableObject {
     @Published var firstName: String = ""
     @Published var lastName: String = ""
     @Published var location: String = ""
-    @Published var category: String = ""
+    @Published var category: String = "Wedding"
+    @Published var customCategoryInput: String = ""
     @Published var preferences: String = ""
     
     @Published var selectedPhotoItem: PhotosPickerItem? = nil
@@ -31,6 +32,8 @@ class EditProfileViewModel: ObservableObject {
     private let databaseReference = Database.database().reference()
     let userId: String
     let userRole: String
+    
+    let availableCategories = ["Wedding", "Portrait", "Landscape", "Event", "Fashion", "Food", "Travel", "Custom"]
     
     init(userId: String, userRole: String) {
         self.userId = userId
@@ -51,7 +54,17 @@ class EditProfileViewModel: ObservableObject {
                 
                 if userRole == "Photographer" {
                     self.location = dict["location"] as? String ?? ""
-                    self.category = dict["category"] as? String ?? ""
+                    let fetchedCategory = dict["category"] as? String ?? ""
+                    
+                    // ADDED: Logic to map custom categories
+                    if availableCategories.contains(fetchedCategory) {
+                        self.category = fetchedCategory
+                    } else if !fetchedCategory.isEmpty {
+                        self.category = "Custom"
+                        self.customCategoryInput = fetchedCategory
+                    } else {
+                        self.category = "Wedding"
+                    }
                 } else {
                     self.preferences = dict["preferences"] as? String ?? ""
                 }
@@ -81,8 +94,10 @@ class EditProfileViewModel: ObservableObject {
             }
             
             if userRole == "Photographer" {
+                let finalCategory = category == "Custom" ? customCategoryInput.trimmingCharacters(in: .whitespacesAndNewlines) : category
+                
                 updatedData["location"] = location.trimmingCharacters(in: .whitespacesAndNewlines)
-                updatedData["category"] = category.trimmingCharacters(in: .whitespacesAndNewlines)
+                updatedData["category"] = finalCategory
             } else {
                 updatedData["preferences"] = preferences.trimmingCharacters(in: .whitespacesAndNewlines)
             }

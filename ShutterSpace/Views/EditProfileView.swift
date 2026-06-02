@@ -1,5 +1,5 @@
 //
-//  EditPorfileView.swift
+//  EditProfileView.swift
 //  ShutterSpace
 //
 //  Created by Elifele Fredrik on 29/05/26.
@@ -20,6 +20,7 @@ struct EditProfileView: View {
             )
         )
     }
+    
     var body: some View {
         NavigationStack {
             Form {
@@ -59,6 +60,7 @@ struct EditProfileView: View {
                 }
             }
             .preferredColorScheme(.dark)
+            .animation(.easeInOut, value: editViewModel.category)
         }
     }
 }
@@ -134,7 +136,17 @@ extension EditProfileView {
         Section {
             if editViewModel.userRole == "Photographer" {
                 TextField("Location", text: $editViewModel.location)
-                TextField("Category (e.g. Wedding, Portrait)", text: $editViewModel.category)
+                
+                Picker("Category", selection: $editViewModel.category) {
+                    ForEach(editViewModel.availableCategories, id: \.self) { category in
+                        Text(category).tag(category)
+                    }
+                }
+                
+                if editViewModel.category == "Custom" {
+                    TextField("Enter custom category", text: $editViewModel.customCategoryInput)
+                }
+                
             } else {
                 TextField("Aesthetic Preferences", text: $editViewModel.preferences, axis: .vertical)
                     .lineLimit(3...6)

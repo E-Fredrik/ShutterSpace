@@ -24,8 +24,7 @@ class Admin: User {
             firstName: firstName,
             lastName: lastName,
             email: email,
-            role: "Admin",
-            access_code: access_code
+            role: "Admin"
         )
     }
 

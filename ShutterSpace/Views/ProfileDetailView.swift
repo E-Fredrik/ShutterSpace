@@ -55,27 +55,11 @@ struct ProfileDetailView: View {
 extension ProfileDetailView {
     func renderProfileHeader() -> some View {
         VStack(spacing: 16.0) {
-            AsyncImage(url: URL(string: photographerDetails.profileImageUrl)) {
-                phase in
-                switch phase {
-                case .empty:
-                    ProgressView()
-                case .success(let image):
-                    image
-                        .resizable()
-                        .scaledToFill()
-                case .failure(_):
-                    Image(systemName: "person.crop.circle.fill")
-                        .resizable()
-                        .scaledToFit()
-                        .foregroundColor(.secondary)
-                @unknown default:
-                    EmptyView()
-                }
-            }
-            .frame(width: 100.0, height: 100.0)
-            .clipShape(Circle())
-            .padding(.top, 16.0)
+            profileImageComponent
+                .frame(width: 100.0, height: 100.0)
+                .clipShape(Circle())
+                .padding(.top, 16.0)
+            
             VStack(spacing: 8.0) {
                 Text(
                     "\(photographerDetails.firstName) \(photographerDetails.lastName)"
@@ -100,6 +84,34 @@ extension ProfileDetailView {
                     }
                 }
                 .font(.subheadline)
+            }
+        }
+    }
+    
+    @ViewBuilder
+    private var profileImageComponent: some View {
+        if photographerDetails.profileImageUrl.isEmpty {
+            Image(systemName: "person.crop.circle.fill")
+                .resizable()
+                .scaledToFit()
+                .foregroundColor(.secondary)
+        } else {
+            AsyncImage(url: URL(string: photographerDetails.profileImageUrl)) { phase in
+                switch phase {
+                case .empty:
+                    ProgressView()
+                case .success(let image):
+                    image
+                        .resizable()
+                        .scaledToFill()
+                case .failure(_):
+                    Image(systemName: "person.crop.circle.fill")
+                        .resizable()
+                        .scaledToFit()
+                        .foregroundColor(.secondary)
+                @unknown default:
+                    EmptyView()
+                }
             }
         }
     }
@@ -225,12 +237,11 @@ extension ProfileDetailView {
             firstName: "Alia",
             lastName: "Rahman",
             email: "alia.rahman@example.com",
-            access_code: "DEMO-ACCESS",
             stripeAccountId: "acct_123TEST",
             rating: 4.7,
             location: "San Francisco, CA",
             category: "Portrait",
-            profileImageUrl: "person.circle.fill"
+            profileImageUrl: "" // Blank to test placeholder
         )
     )
 }

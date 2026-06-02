@@ -13,7 +13,8 @@ struct DashboardView: View {
 
     @State private var sessionToComplete: DashboardSession? = nil
     @State private var isShowingCompleteSheet: Bool = false
-
+    @State private var isShowingEditProfile: Bool = false
+    
     var body: some View {
         NavigationStack {
             ScrollView {
@@ -31,9 +32,9 @@ struct DashboardView: View {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Menu {
                         Button(action: {
-                            // Navigate to settings view
+                            isShowingEditProfile = true
                         }) {
-                            Label("Settings", systemImage: "gear")
+                            Label("Edit Profile", systemImage: "pencil")
                         }
 
                         Button(
@@ -49,7 +50,7 @@ struct DashboardView: View {
                             )
                         }
                     } label: {
-                        Image(systemName: "gearshape")
+                        Image(systemName: "person.crop.circle")
                             .foregroundColor(.primary)
                             .padding(8)
                     }
@@ -64,6 +65,11 @@ struct DashboardView: View {
             }
             .sheet(isPresented: $isShowingCompleteSheet) {
                 renderCompleteSessionSheet()
+            }
+            .sheet(isPresented: $isShowingEditProfile, onDismiss: {
+                Task { await viewModel.fetchDashboardData() }
+            }) {
+                EditProfileView(userId: viewModel.currentUserId, userRole: "Photographer")
             }
         }
     }

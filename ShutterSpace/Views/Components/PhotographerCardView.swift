@@ -99,7 +99,6 @@ struct PhotographerCardView: View {
             firstName: "Alia",
             lastName: "Rahman",
             email: "alia@example.com",
-            access_code: "auth_token_1x2y3z",
             stripeAccountId: "acct_889900",
             rating: 4.8,
             location: "Surabaya",

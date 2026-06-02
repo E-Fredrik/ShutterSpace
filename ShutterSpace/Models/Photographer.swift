@@ -19,7 +19,6 @@ class Photographer: User {
         firstName: String,
         lastName: String,
         email: String,
-        access_code: String,
         stripeAccountId: String,
         rating: Double,
         location: String,
@@ -31,13 +30,13 @@ class Photographer: User {
         self.location = location
         self.category = category
         self.profileImageUrl = profileImageUrl
+        
         super.init(
             id: id,
             firstName: firstName,
             lastName: lastName,
             email: email,
-            role: "Photographer",
-            access_code: access_code
+            role: "Photographer"
         )
     }
 

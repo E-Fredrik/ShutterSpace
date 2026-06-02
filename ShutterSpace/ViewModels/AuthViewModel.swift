@@ -6,6 +6,7 @@
 //
 
 import Combine
+import FirebaseAuth
 import FirebaseDatabase
 import Foundation
 import PhotosUI
@@ -19,6 +20,9 @@ class AuthViewModel: ObservableObject {
     @Published var firstNameInput: String = ""
     @Published var lastNameInput: String = ""
     @Published var selectedRole: String = "Client"
+    @Published var locationInput: String = ""
+    @Published var selectedCategory: String = "Wedding"
+    @Published var customCategoryInput: String = ""
     @Published var selectedPhotoItem: PhotosPickerItem? = nil
     @Published var profileImageData: Data? = nil
     @Published var profileImageDisplay: Image? = nil
@@ -32,55 +36,67 @@ class AuthViewModel: ObservableObject {
         return emailPredicate.evaluate(with: emailInput)
     }
 
+    var isRegisterFormValid: Bool {
+        let baseValidation =
+            !firstNameInput.isEmpty && !lastNameInput.isEmpty
+            && !accessCodeInput.isEmpty && !emailInput.isEmpty && isValidEmail
+            && accessCodeInput.count >= 6
+
+        if selectedRole == "Photographer" {
+            let isLocationValid = !locationInput.isEmpty
+            let isCategoryValid =
+                selectedCategory == "Custom"
+                ? !customCategoryInput.trimmingCharacters(
+                    in: .whitespacesAndNewlines
+                ).isEmpty : true
+
+            return baseValidation && isLocationValid && isCategoryValid
+        }
+
+        return baseValidation
+    }
+
     private let databaseRef = Database.database().reference()
 
     func login() async {
         isLoading = true
         errorMessage = ""
 
+        let formattedEmail = emailInput.trimmingCharacters(
+            in: .whitespacesAndNewlines
+        ).lowercased()
+
         do {
-            let snapshot = try await databaseRef.child("users")
-                .queryOrdered(byChild: "email")
-                .queryEqual(toValue: emailInput)
-                .getData()
+            let authResult = try await Auth.auth().signIn(
+                withEmail: formattedEmail,
+                password: accessCodeInput
+            )
+            let loggedInUserId = authResult.user.uid
 
-            guard
-                let children = snapshot.children.allObjects as? [DataSnapshot],
-                !children.isEmpty
-            else {
-                throw URLError(.userAuthenticationRequired)
-            }
+            let snapshot = try await databaseRef.child("users").child(
+                loggedInUserId
+            ).getData()
 
-            var userFound = false
+            if let dict = snapshot.value as? [String: Any] {
+                let fetchedRole = dict["role"] as? String ?? "Client"
 
-            for child in children {
-                if let dict = child.value as? [String: Any],
-                    let storedAccessCode = dict["access_code"] as? String,
-                    storedAccessCode == accessCodeInput
-                {
-                    let fetchedId = dict["id"] as? String ?? ""
-                    let fetchedRole = dict["role"] as? String ?? "Client"
-                    UserDefaults.standard.set(
-                        fetchedId,
-                        forKey: "currentUserId"
-                    )
-                    UserDefaults.standard.set(
-                        fetchedRole,
-                        forKey: "currentUserRole"
-                    )
-                    userFound = true
-                    break
-                }
-            }
+                UserDefaults.standard.set(
+                    loggedInUserId,
+                    forKey: "currentUserId"
+                )
+                UserDefaults.standard.set(
+                    fetchedRole,
+                    forKey: "currentUserRole"
+                )
 
-            if userFound {
-                isAuthenticated = true
+                self.isAuthenticated = true
             } else {
-                errorMessage = "Invalid access code"
+                errorMessage = "User profile data not found."
             }
 
         } catch {
-            errorMessage = "Login failed. Please check your credentials."
+            errorMessage = "Invalid email or access code."
+            print("Login error: \(error.localizedDescription)")
         }
 
         isLoading = false
@@ -93,26 +109,14 @@ class AuthViewModel: ObservableObject {
         let formattedEmail = emailInput.trimmingCharacters(
             in: .whitespacesAndNewlines
         ).lowercased()
-        let formattedAccessCode = accessCodeInput.trimmingCharacters(
-            in: .whitespacesAndNewlines
-        )
 
         do {
-            let snapshot = try await databaseRef.child("users")
-                .queryOrdered(byChild: "email")
-                .queryEqual(toValue: formattedEmail)
-                .getData()
+            let authResult = try await Auth.auth().createUser(
+                withEmail: formattedEmail,
+                password: accessCodeInput
+            )
+            let newUserId = authResult.user.uid
 
-            if let children = snapshot.children.allObjects as? [DataSnapshot],
-                !children.isEmpty
-            {
-                errorMessage =
-                    "This email is already registered. Please log in."
-                isLoading = false
-                return
-            }
-
-            let newUserId = UUID().uuidString
             var uploadedImageUrl = ""
 
             if let imageData = profileImageData {
@@ -133,39 +137,79 @@ class AuthViewModel: ObservableObject {
                 ),
                 "email": formattedEmail,
                 "role": selectedRole,
-                "access_code": formattedAccessCode,
             ]
 
             if selectedRole == "Photographer" {
+                let finalCategory =
+                    selectedCategory == "Custom"
+                    ? customCategoryInput.trimmingCharacters(
+                        in: .whitespacesAndNewlines
+                    ) : selectedCategory
+
                 userData["stripeAccountId"] = ""
                 userData["rating"] = 5.0
-                userData["location"] = "Unspecified"
-                userData["category"] = "General"
+                userData["location"] = locationInput.trimmingCharacters(
+                    in: .whitespacesAndNewlines
+                )
+                userData["category"] = finalCategory  // Save the selected/custom category
                 userData["profileImageUrl"] = uploadedImageUrl
             } else {
                 userData["preferences"] = ""
                 userData["profileImageUrl"] = uploadedImageUrl
             }
 
-            try await databaseRef.child("users").child(newUserId)
-                .setValue(userData)
+            try await databaseRef.child("users").child(newUserId).setValue(
+                userData
+            )
 
             UserDefaults.standard.set(newUserId, forKey: "currentUserId")
             UserDefaults.standard.set(selectedRole, forKey: "currentUserRole")
 
+            self.isAuthenticated = true
+
         } catch {
-            errorMessage = "Registration failed. Please try again."
+            if let nsError = error as NSError? {
+                if nsError.domain == AuthErrorDomain {
+                    switch nsError.code {
+                    case AuthErrorCode.emailAlreadyInUse.rawValue:
+                        errorMessage =
+                            "This email is already registered. Please log in."
+                    case AuthErrorCode.weakPassword.rawValue:
+                        errorMessage =
+                            "Access code must be at least 6 characters."
+                    case AuthErrorCode.invalidEmail.rawValue:
+                        errorMessage = "The email address is invalid."
+                    default:
+                        errorMessage = nsError.localizedDescription
+                    }
+                } else {
+                    errorMessage = "Registration failed. Please try again."
+                }
+            }
+            print("Registration error: \(error.localizedDescription)")
         }
 
         isLoading = false
     }
+
     func logout() {
+        do {
+            try Auth.auth().signOut()
+        } catch {
+            print(
+                "Error signing out of Firebase: \(error.localizedDescription)"
+            )
+        }
+
         UserDefaults.standard.removeObject(forKey: "currentUserId")
         UserDefaults.standard.removeObject(forKey: "currentUserRole")
 
         self.isAuthenticated = false
         self.emailInput = ""
         self.accessCodeInput = ""
+        self.locationInput = ""
+        self.selectedCategory = "Wedding"
+        self.customCategoryInput = ""
     }
 
     func processImageSelection(item: PhotosPickerItem?) {

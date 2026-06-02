@@ -14,6 +14,7 @@ struct UserProfileView: View {
     @AppStorage("currentUserId") private var currentUserId: String = ""
 
     @State private var isShowingEditProfile = false
+
     var body: some View {
         NavigationStack {
             ScrollView {
@@ -34,31 +35,10 @@ struct UserProfileView: View {
 extension UserProfileView {
     func renderProfileHeader() -> some View {
         VStack(spacing: 16.0) {
-            if profileViewModel.isLoading {
-                ProgressView()
-                    .frame(width: 120.0, height: 120.0)
-            } else {
-                AsyncImage(url: URL(string: profileViewModel.profileImageUrl)) {
-                    phase in
-                    switch phase {
-                    case .empty:
-                        ProgressView()
-                    case .success(let image):
-                        image
-                            .resizable()
-                            .scaledToFill()
-                    case .failure(_):
-                        Image(systemName: "person.crop.circle.fill")
-                            .resizable()
-                            .scaledToFit()
-                            .foregroundColor(.secondary)
-                    @unknown default:
-                        EmptyView()
-                    }
-                }
+            profileImageComponent
                 .frame(width: 120.0, height: 120.0)
                 .clipShape(Circle())
-            }
+
             VStack(spacing: 4.0) {
                 Text(
                     "\(profileViewModel.firstName) \(profileViewModel.lastName)"
@@ -79,6 +59,35 @@ extension UserProfileView {
             }
         }
         .padding(.top, 24.0)
+    }
+
+    @ViewBuilder
+    private var profileImageComponent: some View {
+        if profileViewModel.isLoading {
+            ProgressView()
+        } else if profileViewModel.profileImageUrl.isEmpty {
+            Image(systemName: "person.crop.circle.fill")
+                .resizable()
+                .foregroundColor(.secondary)
+        } else {
+            AsyncImage(url: URL(string: profileViewModel.profileImageUrl)) {
+                phase in
+                switch phase {
+                case .empty:
+                    ProgressView()
+                case .success(let image):
+                    image
+                        .resizable()
+                        .scaledToFill()
+                case .failure:
+                    Image(systemName: "person.crop.circle.fill")
+                        .resizable()
+                        .foregroundColor(.secondary)
+                @unknown default:
+                    EmptyView()
+                }
+            }
+        }
     }
 
     @ViewBuilder
@@ -141,8 +150,4 @@ extension UserProfileView {
             EditProfileView(userId: currentUserId, userRole: currentUserRole)
         }
     }
-}
-
-#Preview {
-    UserProfileView()
 }
