@@ -22,6 +22,15 @@ struct LoginView: View {
             .padding()
             .navigationBarHidden(true)
             .preferredColorScheme(.dark)
+            .alert(isPresented: $authViewModel.showAlert) {
+                Alert(
+                    title: Text(authViewModel.alertTitle),
+                    message: Text(authViewModel.alertMessage),
+                    dismissButton: .default(Text("OK")) {
+                        authViewModel.accessCodeInput = ""
+                    }
+                )
+            }
         }
     }
 }
@@ -54,8 +63,10 @@ extension LoginView {
                     isSecure: false,
                     keyboardType: .emailAddress
                 )
-                
-                if !authViewModel.emailInput.isEmpty && !authViewModel.isValidEmail {
+
+                if !authViewModel.emailInput.isEmpty
+                    && !authViewModel.isValidEmail
+                {
                     Text("Please enter a valid email address.")
                         .font(.caption)
                         .foregroundColor(.red)
@@ -79,8 +90,10 @@ extension LoginView {
     }
 
     func renderActionButtons() -> some View {
-        let isLoginDisabled = authViewModel.isLoading || !authViewModel.isValidEmail || authViewModel.accessCodeInput.isEmpty
-        
+        let isLoginDisabled =
+            authViewModel.isLoading || !authViewModel.isValidEmail
+            || authViewModel.accessCodeInput.isEmpty
+
         return VStack(spacing: 16.0) {
             Button(action: {
                 Task {

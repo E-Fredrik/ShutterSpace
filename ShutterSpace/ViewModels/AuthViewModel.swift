@@ -21,8 +21,10 @@ class AuthViewModel: ObservableObject {
     @Published var lastNameInput: String = ""
     @Published var selectedRole: String = "Client"
     @Published var locationInput: String = ""
+
     @Published var selectedCategory: String = "Wedding"
     @Published var customCategoryInput: String = ""
+
     @Published var selectedPhotoItem: PhotosPickerItem? = nil
     @Published var profileImageData: Data? = nil
     @Published var profileImageDisplay: Image? = nil
@@ -30,10 +32,20 @@ class AuthViewModel: ObservableObject {
     @Published var errorMessage: String = ""
     @Published var isAuthenticated: Bool = false
 
+    // ADDED: Alert properties for banned/suspended accounts
+    @Published var showAlert: Bool = false
+    @Published var alertMessage: String = ""
+    @Published var alertTitle: String = "Account Alert"
+
     var isValidEmail: Bool {
         let emailFormat = "[A-Z0-9a-z._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,64}"
         let emailPredicate = NSPredicate(format: "SELF MATCHES %@", emailFormat)
         return emailPredicate.evaluate(with: emailInput)
+    }
+
+    var isRegisterFormStarted: Bool {
+        !firstNameInput.isEmpty || !lastNameInput.isEmpty || !emailInput.isEmpty
+            || !accessCodeInput.isEmpty
     }
 
     var isRegisterFormValid: Bool {
@@ -78,6 +90,28 @@ class AuthViewModel: ObservableObject {
             ).getData()
 
             if let dict = snapshot.value as? [String: Any] {
+
+                // NEW: Intercept login to check account status
+                let status = dict["status"] as? String ?? "Active"
+
+                if status == "Banned" {
+                    self.alertTitle = "Account Banned"
+                    self.alertMessage =
+                        "This account has been permanently banned for violating ShutterSpace Terms of Service."
+                    self.showAlert = true
+                    try? Auth.auth().signOut()
+                    self.isLoading = false
+                    return
+                } else if status == "Suspended" {
+                    self.alertTitle = "Account Suspended"
+                    self.alertMessage =
+                        "This account is temporarily suspended. Please contact ShutterSpace support for details."
+                    self.showAlert = true
+                    try? Auth.auth().signOut()
+                    self.isLoading = false
+                    return
+                }
+
                 let fetchedRole = dict["role"] as? String ?? "Client"
 
                 UserDefaults.standard.set(
@@ -137,6 +171,7 @@ class AuthViewModel: ObservableObject {
                 ),
                 "email": formattedEmail,
                 "role": selectedRole,
+                "status": "Active",  // Ensure all new users start out Active
             ]
 
             if selectedRole == "Photographer" {
