@@ -7,13 +7,20 @@
 
 import SwiftUI
 
+// Wrapper to hold the URL for the Full Screen Cover
+struct PaymentURLWrapper: Identifiable {
+    let id = UUID()
+    let url: URL
+}
+
 struct BookSessionView: View {
 
     // MARK: - Properties
     @StateObject private var viewModel: BookingViewModel
     @Environment(\.dismiss) private var dismissView
 
-    @State private var isShowingPayment = false
+    // NEW: Handles the payment sheet directly, no PaymentView required
+    @State private var snapUrlWrapper: PaymentURLWrapper? = nil
 
     // MARK: - Lifecycle
     init(photographerId: String) {
@@ -43,8 +50,12 @@ struct BookSessionView: View {
         .task {
             async let packagesTask: () = viewModel.fetchPackages()
             async let slotsTask: () = viewModel.fetchAvailableTimeSlots()
-            async let bookedTask: () = viewModel.fetchBookedTimeSlots()
+            async let bookedTask: () = viewModel.fetchAllBookedTimeSlots()
+
             _ = await (packagesTask, slotsTask, bookedTask)
+        }
+        .onChange(of: viewModel.selectedDate) { _ in
+            viewModel.selectedTimeSlot = nil
         }
         .onChange(of: viewModel.selectedPackage?.id) { _ in
             if let time = viewModel.selectedTimeSlot,
@@ -53,23 +64,55 @@ struct BookSessionView: View {
                 viewModel.selectedTimeSlot = nil
             }
         }
+
+        // --- ALERTS ---
         .alert("Booking Confirmed", isPresented: $viewModel.bookingComplete) {
             Button("Done") {
-                dismissView()
+                dismissView()  // Returns user to photographer profile
             }
         } message: {
-            Text("Your session has been successfully booked.")
+            Text(
+                "Your session has been successfully booked and payment is held in Escrow."
+            )
         }
-        // NEW: Attach the Payment Sheet
-        .sheet(isPresented: $isShowingPayment) {
-            PaymentView(viewModel: viewModel)
+        .alert("Payment Issue", isPresented: $viewModel.showErrorAlert) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(viewModel.paymentErrorMessage ?? "An unknown error occurred.")
+        }
+
+        // --- PAYMENT WEBVIEW (Bypasses the modal entirely) ---
+        .fullScreenCover(item: $snapUrlWrapper) { wrapper in
+            MidtransPaymentSheet(url: wrapper.url) { result in
+
+                // 1. Instantly close the WebView
+                self.snapUrlWrapper = nil
+
+                // 2. Process result after dismissal
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                    switch result {
+                    case .success:
+                        viewModel.markBookingAsPaid()  // This triggers the success alert above!
+
+                    case .failed:
+                        viewModel.paymentErrorMessage =
+                            "Booking Failed: Payment was rejected or expired."
+                        viewModel.showErrorAlert = true
+                        viewModel.cancelBooking()
+
+                    case .cancelled:
+                        viewModel.paymentErrorMessage = "Booking Cancelled."
+                        viewModel.showErrorAlert = true
+                        viewModel.cancelBooking()
+                    }
+                }
+            }
         }
         .preferredColorScheme(.dark)
     }
 
     // MARK: - Private Methods
 
-    /// Renders the calendar for date selection, restricting past dates.
     private func renderCalendarSection() -> some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Select Date")
@@ -109,7 +152,6 @@ struct BookSessionView: View {
                     spacing: 12
                 ) {
                     ForEach(viewModel.availableTimeSlots, id: \.self) { time in
-                        // FIXED: Uses the advanced interval overlap calculation
                         let isAvailable = viewModel.isSlotAvailable(time)
 
                         TimeSlotButton(
@@ -121,7 +163,7 @@ struct BookSessionView: View {
                     }
                 }
 
-                if !viewModel.bookedIntervals.isEmpty {
+                if !viewModel.activeBookings.isEmpty {
                     HStack(spacing: 6) {
                         Image(systemName: "lock.fill")
                             .font(.caption2)
@@ -136,7 +178,6 @@ struct BookSessionView: View {
         }
     }
 
-    /// Renders the list of service packages fetched from Firebase.
     private func renderPackagesSection() -> some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Packages")
@@ -168,16 +209,23 @@ struct BookSessionView: View {
         }
     }
 
-    /// Renders the summary of costs and triggers the payment sheet.
     private func renderCheckoutSummarySection() -> some View {
         CheckoutSummaryView(
             packageTitle: viewModel.selectedPackage?.title ?? "",
             packagePrice: viewModel.calculateSubtotal(),
             platformFee: viewModel.platformFee,
             totalCost: viewModel.calculateFinalTotal(),
-            isProcessing: false,
+            isProcessing: viewModel.isBookingInProgress,  // FIXED: Shows a loading spinner while fetching the URL
             payAction: {
-                isShowingPayment = true
+                Task {
+                    do {
+                        // FIXED: Simply call the function, it handles the credentials internally
+                        let url = try await viewModel.setupMidtransPayment()
+                        self.snapUrlWrapper = PaymentURLWrapper(url: url)
+                    } catch {
+                        // Error is automatically handled by showErrorAlert
+                    }
+                }
             }
         )
     }

@@ -7,11 +7,6 @@ import Combine
 import FirebaseDatabase
 import Foundation
 
-struct BookedInterval {
-    let startMin: Int
-    let endMin: Int
-}
-
 @MainActor
 class BookingViewModel: ObservableObject {
     @Published var selectedDate: Date = Date()
@@ -20,10 +15,13 @@ class BookingViewModel: ObservableObject {
     @Published var packages: [ServicePackage] = []
 
     @Published var availableTimeSlots: [String] = []
-    @Published var bookedIntervals: [BookedInterval] = []
+    
+    @Published var activeBookings: [(date: String, startMin: Int, endMin: Int)] = []
+    
     @Published var isBookingInProgress: Bool = false
     @Published var bookingComplete: Bool = false
     @Published var paymentErrorMessage: String? = nil
+    @Published var showErrorAlert: Bool = false // NEW: Handles error popups
 
     let platformFee: Double = 15000.0
     let photographerId: String
@@ -38,21 +36,24 @@ class BookingViewModel: ObservableObject {
     }
     
     private func timeToMinutes(_ timeStr: String) -> Int {
-        let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "en_US_POSIX")
-        
-        formatter.dateFormat = "h:mm a"
-        if let date = formatter.date(from: timeStr) {
-            let cal = Calendar.current
-            return cal.component(.hour, from: date) * 60 + cal.component(.minute, from: date)
-        }
-        
-        formatter.dateFormat = "HH:mm"
-        if let date = formatter.date(from: timeStr) {
-            let cal = Calendar.current
-            return cal.component(.hour, from: date) * 60 + cal.component(.minute, from: date)
-        }
-        return 0
+        let cleanStr = timeStr.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
+        let isPM = cleanStr.contains("pm")
+        let isAM = cleanStr.contains("am")
+
+        let numbersOnly = cleanStr.replacingOccurrences(of: "am", with: "")
+                                  .replacingOccurrences(of: "pm", with: "")
+                                  .trimmingCharacters(in: .whitespacesAndNewlines)
+
+        let components = numbersOnly.components(separatedBy: CharacterSet(charactersIn: ":."))
+        if components.isEmpty { return 0 }
+
+        var hours = Int(components[0]) ?? 0
+        let minutes = components.count > 1 ? (Int(components[1]) ?? 0) : 0
+
+        if isPM && hours < 12 { hours += 12 }
+        if isAM && hours == 12 { hours = 0 }
+
+        return (hours * 60) + minutes
     }
 
     func fetchPackages() async {
@@ -80,19 +81,15 @@ class BookingViewModel: ObservableObject {
         } catch { }
     }
 
-    func fetchBookedTimeSlots() async {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "yyyy-MM-dd"
-        let selectedDateString = formatter.string(from: selectedDate)
-
+    func fetchAllBookedTimeSlots() async {
         do {
             let snapshot = try await databaseRef.child("bookings").getData()
             guard let children = snapshot.children.allObjects as? [DataSnapshot] else {
-                self.bookedIntervals = []
+                self.activeBookings = []
                 return
             }
 
-            var intervals: [BookedInterval] = []
+            var fetched: [(date: String, startMin: Int, endMin: Int)] = []
 
             for child in children {
                 guard
@@ -100,9 +97,8 @@ class BookingViewModel: ObservableObject {
                     let photoId = dict["photographerId"] as? String,
                     photoId == photographerId,
                     let status = dict["status"] as? String,
-                    status == "Accepted" || status == "Completed",
+                    status == "Accepted" || status == "Completed" || status == "Pending",
                     let bookingDate = dict["date"] as? String,
-                    bookingDate == selectedDateString,
                     let timeSlot = dict["timeSlot"] as? String
                 else { continue }
 
@@ -110,23 +106,28 @@ class BookingViewModel: ObservableObject {
                 let startMin = timeToMinutes(timeSlot)
                 let endMin = startMin + duration
                 
-                intervals.append(BookedInterval(startMin: startMin, endMin: endMin))
+                fetched.append((date: bookingDate, startMin: startMin, endMin: endMin))
             }
-
-            self.bookedIntervals = intervals
+            self.activeBookings = fetched
         } catch {
-            self.bookedIntervals = []
+            self.activeBookings = []
         }
     }
     
     func isSlotAvailable(_ time: String) -> Bool {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd"
+        let selectedDateString = formatter.string(from: selectedDate)
+        
         let startMin = timeToMinutes(time)
         let duration = selectedPackage?.duration ?? 1
         let endMin = startMin + duration
 
-        for interval in bookedIntervals {
-            if startMin < interval.endMin && endMin > interval.startMin {
-                return false
+        for booking in activeBookings {
+            if booking.date == selectedDateString {
+                if startMin < booking.endMin && endMin > booking.startMin {
+                    return false
+                }
             }
         }
         return true
@@ -139,15 +140,34 @@ class BookingViewModel: ObservableObject {
 
     @Published var currentBookingId: String? = nil
 
-    func setupMidtransPayment(firstName: String, lastName: String, email: String) async throws -> URL {
+    // FIXED: No longer requires parameters. Fetches user data directly from Firebase!
+    func setupMidtransPayment() async throws -> URL {
         isBookingInProgress = true
         paymentErrorMessage = nil
+        showErrorAlert = false
+
+        // 1. Fetch current user credentials automatically
+        var firstName = "Client"
+        var lastName = ""
+        var email = "client@shutterspace.com"
+        
+        do {
+            let snapshot = try await databaseRef.child("users").child(clientId).getData()
+            if let dict = snapshot.value as? [String: Any] {
+                firstName = dict["firstName"] as? String ?? "Client"
+                lastName = dict["lastName"] as? String ?? ""
+                email = dict["email"] as? String ?? "client@shutterspace.com"
+            }
+        } catch {
+            print("Error fetching user data, proceeding with defaults: \(error.localizedDescription)")
+        }
 
         let newBookingId = UUID().uuidString
         self.currentBookingId = newBookingId
         let total = calculateFinalTotal()
 
         do {
+            // 2. Generate the URL using the auto-fetched data
             let urlString = try await MidtransManager.shared.fetchSnapUrl(
                 orderId: newBookingId, amount: total, firstName: firstName, lastName: lastName, email: email
             )
@@ -156,7 +176,8 @@ class BookingViewModel: ObservableObject {
             return URL(string: urlString)!
         } catch {
             self.paymentErrorMessage = error.localizedDescription
-            isBookingInProgress = false
+            self.showErrorAlert = true
+            self.isBookingInProgress = false
             throw error
         }
     }
@@ -166,6 +187,12 @@ class BookingViewModel: ObservableObject {
         let updates: [String: Any] = ["status": "Pending", "paymentStatus": "Escrow Held"]
         databaseRef.child("bookings").child(bookingId).updateChildValues(updates)
         self.bookingComplete = true
+    }
+
+    func cancelBooking() {
+        guard let bookingId = currentBookingId else { return }
+        databaseRef.child("bookings").child(bookingId).removeValue()
+        self.currentBookingId = nil
     }
 
     private func createBooking(bookingId: String, status: String) async {

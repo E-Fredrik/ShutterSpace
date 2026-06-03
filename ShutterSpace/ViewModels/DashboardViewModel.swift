@@ -37,18 +37,28 @@ class DashboardViewModel: ObservableObject {
     }
 
     func acceptBooking(session: DashboardSession) async {
-        if session.isOverlapping {
-            self.alertMessage =
-                "You cannot accept this booking because it overlaps with an already accepted session on your schedule."
-            self.showAlert = true
-            return
+        let reqStart = timeToMinutes(session.timeSlot)
+        let reqEnd = reqStart + session.duration
+
+        for acc in acceptedSessions where acc.date == session.date {
+            let accStart = timeToMinutes(acc.timeSlot)
+            let accEnd = accStart + acc.duration
+
+            if reqStart < accEnd && reqEnd > accStart {
+                self.alertMessage =
+                    "You cannot accept this booking because it overlaps with an already accepted session on your schedule."
+                self.showAlert = true
+                return
+            }
         }
 
         do {
             try await databaseRef.child("bookings").child(session.bookingId)
                 .child("status").setValue("Accepted")
-            await fetchDashboardData()
-        } catch {}
+            await fetchDashboardData()  // Refreshes UI
+        } catch {
+            print("Error accepting booking: \(error.localizedDescription)")
+        }
     }
 
     func declineBooking(bookingId: String) async {
@@ -104,19 +114,28 @@ class DashboardViewModel: ObservableObject {
     }
 
     private func timeToMinutes(_ timeStr: String) -> Int {
-        let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "en_US_POSIX")
-        formatter.dateFormat = "h:mm a"
-        if let date = formatter.date(from: timeStr) {
-            return Calendar.current.component(.hour, from: date) * 60
-                + Calendar.current.component(.minute, from: date)
-        }
-        formatter.dateFormat = "HH:mm"
-        if let date = formatter.date(from: timeStr) {
-            return Calendar.current.component(.hour, from: date) * 60
-                + Calendar.current.component(.minute, from: date)
-        }
-        return 0
+        let cleanStr = timeStr.lowercased().trimmingCharacters(
+            in: .whitespacesAndNewlines
+        )
+        let isPM = cleanStr.contains("pm")
+        let isAM = cleanStr.contains("am")
+
+        let numbersOnly = cleanStr.replacingOccurrences(of: "am", with: "")
+            .replacingOccurrences(of: "pm", with: "")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+
+        let components = numbersOnly.components(
+            separatedBy: CharacterSet(charactersIn: ":.")
+        )
+        if components.isEmpty { return 0 }
+
+        var hours = Int(components[0]) ?? 0
+        let minutes = components.count > 1 ? (Int(components[1]) ?? 0) : 0
+
+        if isPM && hours < 12 { hours += 12 }
+        if isAM && hours == 12 { hours = 0 }
+
+        return (hours * 60) + minutes
     }
 
     private func fetchPhotographerProfile() async {
