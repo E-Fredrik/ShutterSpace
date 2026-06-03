@@ -54,6 +54,12 @@ struct AdminDashboardView: View {
                                 systemImage: "chart.line.uptrend.xyaxis"
                             )
                         }
+                        NavigationLink(destination: AdminReportsListView()) {
+                            Label(
+                                "User Reports",
+                                systemImage: "exclamationmark.shield.fill"
+                            )
+                        }
                     }
                 }
                 .listStyle(InsetGroupedListStyle())

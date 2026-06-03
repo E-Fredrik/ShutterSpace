@@ -11,6 +11,9 @@ struct SessionRowView: View {
     let session: SessionItem
     let onLeaveReview: (() -> Void)?
 
+    
+    @State private var isShowingReportSheet = false
+
     private var statusColor: Color {
         switch session.status {
         case "Accepted": return .green
@@ -43,7 +46,7 @@ struct SessionRowView: View {
                 VStack(alignment: .trailing, spacing: 4) {
                     Text("Rp \(String(format: "%.0f", session.totalCost))")
                         .font(.headline)
-                    
+
                     Text(statusLabel)
                         .font(.caption)
                         .fontWeight(.semibold)
@@ -106,7 +109,7 @@ struct SessionRowView: View {
                         .truncationMode(.middle)
                 }
             }
-            
+
             if session.status == "Declined" {
                 HStack(spacing: 4) {
                     Image(systemName: "arrow.uturn.backward.circle.fill")
@@ -118,9 +121,35 @@ struct SessionRowView: View {
                 }
                 .padding(.top, 4)
             }
+
+            // MARK: - Report Section
+            Divider()
+                .background(Color.secondary.opacity(0.3))
+                .padding(.top, 4)
+
+            Button {
+                isShowingReportSheet = true
+            } label: {
+                HStack(spacing: 4) {
+                    Image(systemName: "exclamationmark.bubble.fill")
+                    Text("Is there a problem? Report here.")
+                        .underline()
+                }
+                .font(.caption)
+                // Using a muted, high-contrast secondary color to keep the UI clean
+                .foregroundColor(.secondary)
+            }
+            .padding(.top, 2)
         }
         .padding()
         .background(Color(UIColor.secondarySystemBackground))
         .cornerRadius(16)
+        .sheet(isPresented: $isShowingReportSheet) {
+            // Adjust session.id to session.bookingId depending on what you named it in SessionItem
+            ReportBookingView(
+                bookingId: session.id,
+                reportedUserId: session.photographerId
+            )
+        }
     }
 }
