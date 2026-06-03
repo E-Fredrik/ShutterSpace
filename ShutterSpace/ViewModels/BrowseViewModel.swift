@@ -45,73 +45,69 @@ class BrowseViewModel: ObservableObject {
                     }
                 }
 
-                let ratingsMap = await withTaskGroup(
-                    of: (String, Double, Int)?.self
-                ) { group in
-                    let photographerIds = fetchedPhotographers.map { $0.id }
+                var localRatingsMap:
+                    [String: (totalScore: Double, reviewCount: Int)] = [:]
 
-                    for id in photographerIds {
-                        group.addTask {
-                            do {
-                                let reviewSnap = try await self.databaseRef
-                                    .child("reviews").child(id)
-                                    .getData()
+                do {
+                    let allReviewsSnap = try await databaseRef.child("reviews")
+                        .getData()
 
-                                if let reviewDict = reviewSnap.value
-                                    as? [String: Any]
-                                {
-                                    let ratings = reviewDict.values.compactMap {
-                                        review -> Double? in
-                                        if let dict = review as? [String: Any],
-                                            let ratingVal = dict["rating"]
-                                        {
-                                            if let doubleVal = ratingVal
-                                                as? Double
-                                            {
-                                                return doubleVal
-                                            }
-                                            if let intVal = ratingVal as? Int {
-                                                return Double(intVal)
-                                            }
-                                        }
-                                        return nil
-                                    }
+                    if let allReviewsDict = allReviewsSnap.value
+                        as? [String: Any]
+                    {
+        
+                        for (_, reviewData) in allReviewsDict {
+                            if let reviewDict = reviewData as? [String: Any],
+                                let photographerId = reviewDict[
+                                    "photographerId"
+                                ] as? String,
+                                let ratingVal = reviewDict["starRating"]
+                            {
 
-                                    if !ratings.isEmpty {
-                                        let average =
-                                            ratings.reduce(0, +)
-                                            / Double(ratings.count)
-                                        return (id, average, ratings.count)
-                                    }
+                                var ratingAsDouble: Double? = nil
+                                if let doubleVal = ratingVal as? Double {
+                                    ratingAsDouble = doubleVal
                                 }
-                            } catch {
-                            }
-                            return nil
-                        }
-                    }
+                                if let intVal = ratingVal as? Int {
+                                    ratingAsDouble = Double(intVal)
+                                }
 
-                    var results: [String: (Double, Int)] = [:]
-                    for await result in group {
-                        if let validResult = result {
-                            results[validResult.0] = (
-                                validResult.1, validResult.2
-                            )
+                                if let validRating = ratingAsDouble {
+                                    let currentStats =
+                                        localRatingsMap[photographerId] ?? (
+                                            totalScore: 0.0, reviewCount: 0
+                                        )
+                                    localRatingsMap[photographerId] = (
+                                        totalScore: currentStats.totalScore
+                                            + validRating,
+                                        reviewCount: currentStats.reviewCount
+                                            + 1
+                                    )
+                                }
+                            }
                         }
                     }
-                    return results
+                } catch {
+                    print(
+                        "Error fetching the reviews batch: \(error.localizedDescription)"
+                    )
                 }
 
                 for photographer in fetchedPhotographers {
-                    if let newRatingData = ratingsMap[photographer.id] {
-                        photographer.rating = newRatingData.0
-                        photographer.reviewCount = newRatingData.1
+                    if let stats = localRatingsMap[photographer.id] {
+                        photographer.rating =
+                            stats.totalScore / Double(stats.reviewCount)
+                        photographer.reviewCount = stats.reviewCount
+                    } else {
+                        photographer.rating = 0.0
+                        photographer.reviewCount = 0
                     }
                 }
 
                 self.photographers = fetchedPhotographers
             }
         } catch {
-            print(error)
+            print("Error fetching photographers: \(error.localizedDescription)")
         }
 
         isLoading = false
