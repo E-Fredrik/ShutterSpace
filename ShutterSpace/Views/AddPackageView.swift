@@ -8,24 +8,70 @@
 import SwiftUI
 
 struct AddPackageView: View {
-    
+
     @Environment(\.dismiss) var dismissView
     @ObservedObject var portfolioViewModel: ManagePortfolioViewModel
-    
+
     @State private var packageTitleInput: String = ""
     @State private var packagePriceInput: String = ""
-    @State private var packageDurationInput: String = ""
     @State private var packageDeliverablesInput: String = ""
-    
+
+    @State private var selectedHours: Int = 1
+    @State private var selectedMinutes: Int = 0
+
+    var isFormValid: Bool {
+        let isTitleValid =
+            packageTitleInput.trimmingCharacters(in: .whitespaces).count >= 3
+        let isPriceValid = (Double(packagePriceInput) ?? 0) > 0
+        let isDeliverablesValid =
+            packageDeliverablesInput.trimmingCharacters(in: .whitespaces).count
+            >= 5
+        let isDurationValid = selectedHours > 0 || selectedMinutes > 0
+
+        return isTitleValid && isPriceValid && isDeliverablesValid
+            && isDurationValid
+    }
+
     var body: some View {
         NavigationStack {
             Form {
-                Section {
+                Section(
+                    header: Text("Package Details"),
+                    footer: Text(
+                        isFormValid
+                            ? ""
+                            : "Please fill out all fields correctly. Price must be greater than 0."
+                    ).foregroundColor(.red)
+                ) {
                     TextField("Package Title", text: $packageTitleInput)
-                    TextField("Price", text: $packagePriceInput)
+
+                    TextField("Price (Rp)", text: $packagePriceInput)
                         .keyboardType(.decimalPad)
-                    TextField("Duration (e.g. 4 Hours)", text: $packageDurationInput)
-                    TextField("Deliverables/Description", text: $packageDeliverablesInput)
+
+                    TextField(
+                        "Deliverables/Description",
+                        text: $packageDeliverablesInput
+                    )
+                }
+
+                Section(header: Text("Duration")) {
+                    HStack {
+                        Picker("Hours", selection: $selectedHours) {
+                            ForEach(0..<24) { hour in
+                                Text("\(hour) hr").tag(hour)
+                            }
+                        }
+                        .pickerStyle(WheelPickerStyle())
+                        .clipped()
+
+                        Picker("Minutes", selection: $selectedMinutes) {
+                            ForEach([0, 15, 30, 45], id: \.self) { minute in
+                                Text("\(minute) min").tag(minute)
+                            }
+                        }
+                        .pickerStyle(WheelPickerStyle())
+                        .clipped()
+                    }
                 }
             }
             .navigationTitle("New Package")
@@ -36,20 +82,23 @@ struct AddPackageView: View {
                         dismissView()
                     }
                 }
-                
+
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Save") {
-                        if let parsedPrice: Double = Double(packagePriceInput) {
-                            portfolioViewModel
-                                .addNewPackage(
-                                    packageTitle: packageTitleInput,
-                                    packagePrice: parsedPrice,
-                                    packageDeliverables: packageDeliverablesInput,
-                                    packageDuration: packageDurationInput
-                                )
+                        if let parsedPrice = Double(packagePriceInput) {
+                            let totalMinutes =
+                                (selectedHours * 60) + selectedMinutes
+
+                            portfolioViewModel.addNewPackage(
+                                packageTitle: packageTitleInput,
+                                packagePrice: parsedPrice,
+                                packageDeliverables: packageDeliverablesInput,
+                                packageDuration: totalMinutes
+                            )
                             dismissView()
                         }
-                    }.disabled(packageTitleInput.isEmpty || packagePriceInput.isEmpty || packageDeliverablesInput.isEmpty || packageDurationInput.isEmpty)
+                    }
+                    .disabled(!isFormValid)
                 }
             }
             .preferredColorScheme(.dark)

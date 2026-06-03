@@ -23,6 +23,7 @@ class BrowseViewModel: ObservableObject {
         isLoading = true
 
         do {
+            // 1. Fetch all photographers
             let snapshot = try await databaseRef.child("users")
                 .queryOrdered(byChild: "role")
                 .queryEqual(toValue: "Photographer")
@@ -32,19 +33,22 @@ class BrowseViewModel: ObservableObject {
                 var fetchedPhotographers: [Photographer] = []
 
                 for child in children {
-                    if let dict = child.value as? [String: Any],
-                        let jsonData = try? JSONSerialization.data(
-                            withJSONObject: dict
-                        ),
-                        let photographer = try? JSONDecoder().decode(
-                            Photographer.self,
-                            from: jsonData
-                        )
-                    {
-                        fetchedPhotographers.append(photographer)
+                    if let dict = child.value as? [String: Any] {
+                        let status = dict["status"] as? String ?? "Active"
+                        if status != "Banned" && status != "Suspended" {
+                            if let jsonData = try? JSONSerialization.data(
+                                withJSONObject: dict
+                            ),
+                                let photographer = try? JSONDecoder().decode(
+                                    Photographer.self,
+                                    from: jsonData
+                                )
+                            {
+                                fetchedPhotographers.append(photographer)
+                            }
+                        }
                     }
                 }
-
                 var localRatingsMap:
                     [String: (totalScore: Double, reviewCount: Int)] = [:]
 
@@ -55,7 +59,6 @@ class BrowseViewModel: ObservableObject {
                     if let allReviewsDict = allReviewsSnap.value
                         as? [String: Any]
                     {
-        
                         for (_, reviewData) in allReviewsDict {
                             if let reviewDict = reviewData as? [String: Any],
                                 let photographerId = reviewDict[
@@ -92,7 +95,6 @@ class BrowseViewModel: ObservableObject {
                         "Error fetching the reviews batch: \(error.localizedDescription)"
                     )
                 }
-
                 for photographer in fetchedPhotographers {
                     if let stats = localRatingsMap[photographer.id] {
                         photographer.rating =

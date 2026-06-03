@@ -14,7 +14,7 @@ struct DashboardView: View {
     @State private var sessionToComplete: DashboardSession? = nil
     @State private var isShowingCompleteSheet: Bool = false
     @State private var isShowingEditProfile: Bool = false
-    
+
     var body: some View {
         NavigationStack {
             ScrollView {
@@ -28,6 +28,13 @@ struct DashboardView: View {
             }
             .navigationTitle(viewModel.photographerName)
             .navigationBarTitleDisplayMode(.large)
+            .alert(isPresented: $viewModel.showAlert) {
+                Alert(
+                    title: Text("Booking Conflict"),
+                    message: Text(viewModel.alertMessage),
+                    dismissButton: .default(Text("OK"))
+                )
+            }
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Menu {
@@ -66,10 +73,16 @@ struct DashboardView: View {
             .sheet(isPresented: $isShowingCompleteSheet) {
                 renderCompleteSessionSheet()
             }
-            .sheet(isPresented: $isShowingEditProfile, onDismiss: {
-                Task { await viewModel.fetchDashboardData() }
-            }) {
-                EditProfileView(userId: viewModel.currentUserId, userRole: "Photographer")
+            .sheet(
+                isPresented: $isShowingEditProfile,
+                onDismiss: {
+                    Task { await viewModel.fetchDashboardData() }
+                }
+            ) {
+                EditProfileView(
+                    userId: viewModel.currentUserId,
+                    userRole: "Photographer"
+                )
             }
         }
     }
@@ -124,23 +137,40 @@ struct DashboardView: View {
                     .padding()
             } else {
                 ForEach(viewModel.pendingRequests) { request in
-                    DashboardSessionRowView(
-                        session: request,
-                        onAccept: {
-                            Task {
-                                await viewModel.acceptBooking(
-                                    bookingId: request.id
+                    VStack(alignment: .leading, spacing: 4) {
+                        DashboardSessionRowView(
+                            session: request,
+                            onAccept: {
+                                Task {
+                                    await viewModel.acceptBooking(
+                                        session: request
+                                    )
+                                }
+                            },
+                            onDecline: {
+                                Task {
+                                    await viewModel.declineBooking(
+                                        bookingId: request.id
+                                    )
+                                }
+                            }
+                        )
+
+                        if request.isOverlapping {
+                            HStack(spacing: 4) {
+                                Image(
+                                    systemName: "exclamationmark.triangle.fill"
+                                )
+                                Text(
+                                    "Warning: Time slot overlaps with an accepted gig."
                                 )
                             }
-                        },
-                        onDecline: {
-                            Task {
-                                await viewModel.declineBooking(
-                                    bookingId: request.id
-                                )
-                            }
+                            .font(.caption)
+                            .foregroundColor(.red)
+                            .padding(.leading, 4)
                         }
-                    )
+                    }
+                    .padding(.bottom, 8)
                 }
             }
         }

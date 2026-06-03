@@ -15,15 +15,17 @@ struct PackageRowView: View {
             HStack {
                 Text(activeServicePackage.title)
                     .font(.headline)
-                
+
                 Spacer()
 
                 VStack(alignment: .trailing, spacing: 2) {
-                    Text("Rp \(String(format: "%.0f", activeServicePackage.price))")
-                        .font(.subheadline)
-                        .fontWeight(.semibold)
-                    
-                    Text(activeServicePackage.duration)
+                    Text(
+                        "Rp \(String(format: "%.0f", activeServicePackage.price))"
+                    )
+                    .font(.subheadline)
+                    .fontWeight(.semibold)
+
+                    Text(formatDuration(activeServicePackage.duration))
                         .font(.caption2)
                         .foregroundColor(.secondary)
                 }
@@ -35,5 +37,18 @@ struct PackageRowView: View {
                 .lineLimit(2)
         }
         .padding(.vertical, 8.0)
+    }
+
+    private func formatDuration(_ totalMinutes: Int) -> String {
+        let hours = totalMinutes / 60
+        let minutes = totalMinutes % 60
+
+        if hours > 0 && minutes > 0 {
+            return "\(hours)h \(minutes)m"
+        } else if hours > 0 {
+            return "\(hours)h"
+        } else {
+            return "\(minutes)m"
+        }
     }
 }

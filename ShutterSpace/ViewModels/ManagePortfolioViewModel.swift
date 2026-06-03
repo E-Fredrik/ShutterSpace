@@ -5,11 +5,11 @@
 //  Created by Elifele Fredrik on 28/05/26.
 //
 
-import SwiftUI
 import Combine
 import FirebaseDatabase
 import Foundation
 import PhotosUI
+import SwiftUI
 import _PhotosUI_SwiftUI
 
 @MainActor
@@ -80,7 +80,7 @@ class ManagePortfolioViewModel: ObservableObject {
         packageTitle: String,
         packagePrice: Double,
         packageDeliverables: String,
-        packageDuration: String
+        packageDuration: Int
     ) {
         let newPackageId = UUID().uuidString
         let newlyCreatedPackage = ServicePackage(
@@ -102,22 +102,26 @@ class ManagePortfolioViewModel: ObservableObject {
             ).child(newPackageId).setValue(dict)
         }
     }
-    
+
     func updatePackage(editedPackage: ServicePackage) {
-        if let index = servicePackage.firstIndex(where: { $0.packageId == editedPackage.packageId }) {
+        if let index = servicePackage.firstIndex(where: {
+            $0.packageId == editedPackage.packageId
+        }) {
             servicePackage[index] = editedPackage
         }
-        
+
         if let encodedData = try? JSONEncoder().encode(editedPackage),
-           let dict = try? JSONSerialization.jsonObject(with: encodedData) as? [String: Any] {
-            
+            let dict = try? JSONSerialization.jsonObject(with: encodedData)
+                as? [String: Any]
+        {
+
             databaseRef.child("servicePackages")
                 .child(photographerId)
                 .child(editedPackage.packageId)
                 .setValue(dict)
         }
     }
-    
+
     func deletePackage(at offsets: IndexSet) {
         for index in offsets {
             let packageToDelete = servicePackage[index]
@@ -126,7 +130,7 @@ class ManagePortfolioViewModel: ObservableObject {
                 .child(packageToDelete.packageId)
                 .removeValue()
         }
-        
+
         servicePackage.remove(atOffsets: offsets)
     }
 

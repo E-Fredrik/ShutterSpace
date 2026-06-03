@@ -17,6 +17,8 @@ class DashboardViewModel: ObservableObject {
     @Published var pendingRequests: [DashboardSession] = []
     @Published var acceptedSessions: [DashboardSession] = []
     @Published var isLoading: Bool = true
+    @Published var showAlert: Bool = false
+    @Published var alertMessage: String = ""
 
     var currentUserId: String {
         UserDefaults.standard.string(forKey: "currentUserId") ?? ""
@@ -34,17 +36,19 @@ class DashboardViewModel: ObservableObject {
         isLoading = false
     }
 
-    func acceptBooking(bookingId: String) async {
-        do {
-            try await databaseRef.child("bookings").child(bookingId).child(
-                "status"
-            ).setValue(
-                "Accepted"
-            )
-            await fetchDashboardData()
-        } catch {
-            print("Error accepting booking: \(error.localizedDescription)")
+    func acceptBooking(session: DashboardSession) async {
+        if session.isOverlapping {
+            self.alertMessage =
+                "You cannot accept this booking because it overlaps with an already accepted session on your schedule."
+            self.showAlert = true
+            return
         }
+
+        do {
+            try await databaseRef.child("bookings").child(session.bookingId)
+                .child("status").setValue("Accepted")
+            await fetchDashboardData()
+        } catch {}
     }
 
     func declineBooking(bookingId: String) async {
@@ -99,6 +103,22 @@ class DashboardViewModel: ObservableObject {
         isLoading = false
     }
 
+    private func timeToMinutes(_ timeStr: String) -> Int {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.dateFormat = "h:mm a"
+        if let date = formatter.date(from: timeStr) {
+            return Calendar.current.component(.hour, from: date) * 60
+                + Calendar.current.component(.minute, from: date)
+        }
+        formatter.dateFormat = "HH:mm"
+        if let date = formatter.date(from: timeStr) {
+            return Calendar.current.component(.hour, from: date) * 60
+                + Calendar.current.component(.minute, from: date)
+        }
+        return 0
+    }
+
     private func fetchPhotographerProfile() async {
         do {
             let snapshot = try await databaseRef.child("users").child(
@@ -141,6 +161,10 @@ class DashboardViewModel: ObservableObject {
                 let bookingId: String =
                     dict["bookingId"] as? String ?? child.key
 
+                // Fallback to fetch package duration if not in booking dict
+                let packageData = await fetchPackageData(packageId: packageId)
+                let duration = dict["duration"] as? Int ?? packageData.duration
+
                 if status == "Completed" {
                     earnings += cost
                     sessions += 1
@@ -151,22 +175,18 @@ class DashboardViewModel: ObservableObject {
                         sessions += 1
                     }
 
-                    let clientName: String = await fetchClientName(
-                        clientId: clientId
-                    )
-                    let packageTitle: String = await fetchPackageTitle(
-                        packageId: packageId
-                    )
+                    let clientName = await fetchClientName(clientId: clientId)
 
                     let session = DashboardSession(
                         id: bookingId,
                         bookingId: bookingId,
                         clientName: clientName,
-                        packageTitle: packageTitle,
+                        packageTitle: packageData.title,
                         totalCost: cost,
                         date: date,
                         timeSlot: timeSlot,
-                        status: status
+                        status: status,
+                        duration: duration
                     )
 
                     if status == "Accepted" {
@@ -176,14 +196,48 @@ class DashboardViewModel: ObservableObject {
                     }
                 }
             }
+
+            // NEW: Flag overlaps in Pending Requests
+            for i in 0..<requests.count {
+                let reqStart = timeToMinutes(requests[i].timeSlot)
+                let reqEnd = reqStart + requests[i].duration
+
+                var overlaps = false
+                for acc in accepted where acc.date == requests[i].date {
+                    let accStart = timeToMinutes(acc.timeSlot)
+                    let accEnd = accStart + acc.duration
+
+                    if reqStart < accEnd && reqEnd > accStart {
+                        overlaps = true
+                        break
+                    }
+                }
+                requests[i].isOverlapping = overlaps
+            }
+
             self.totalEarnings = earnings
             self.totalSessions = sessions
             self.pendingRequests = requests
             self.acceptedSessions = accepted
 
-        } catch {
-            print("Error fetching bookings: \(error.localizedDescription)")
-        }
+        } catch {}
+    }
+
+    private func fetchPackageData(packageId: String) async -> (
+        title: String, duration: Int
+    ) {
+        do {
+            let snap = try await databaseRef.child("servicePackages").child(
+                currentUserId
+            ).child(packageId).getData()
+            if let dict = snap.value as? [String: Any],
+                let title = dict["title"] as? String
+            {
+                let duration = dict["duration"] as? Int ?? 60
+                return (title, duration)
+            }
+        } catch {}
+        return ("Custom Session", 60)
     }
 
     private func fetchClientName(clientId: String) async -> String {

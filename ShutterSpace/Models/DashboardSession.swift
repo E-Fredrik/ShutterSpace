@@ -15,5 +15,7 @@ struct DashboardSession: Identifiable {
     let totalCost: Double
     let date: String
     let timeSlot: String
-    let status: String // Pending Accepted
+    let status: String
+    let duration: Int
+    var isOverlapping: Bool = false
 }

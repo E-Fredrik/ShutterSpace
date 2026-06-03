@@ -8,18 +8,20 @@
 import SwiftUI
 
 struct BookSessionView: View {
-    
+
     // MARK: - Properties
     @StateObject private var viewModel: BookingViewModel
     @Environment(\.dismiss) private var dismissView
-    
+
     @State private var isShowingPayment = false
-    
+
     // MARK: - Lifecycle
     init(photographerId: String) {
-        self._viewModel = StateObject(wrappedValue: BookingViewModel(photographerId: photographerId))
+        self._viewModel = StateObject(
+            wrappedValue: BookingViewModel(photographerId: photographerId)
+        )
     }
-    
+
     // MARK: - Body
     var body: some View {
         ScrollView {
@@ -27,8 +29,10 @@ struct BookSessionView: View {
                 renderCalendarSection()
                 renderTimeSlotsSection()
                 renderPackagesSection()
-                
-                if viewModel.selectedPackage != nil && viewModel.selectedTimeSlot != nil {
+
+                if viewModel.selectedPackage != nil
+                    && viewModel.selectedTimeSlot != nil
+                {
                     renderCheckoutSummarySection()
                 }
             }
@@ -42,11 +46,12 @@ struct BookSessionView: View {
             async let bookedTask: () = viewModel.fetchBookedTimeSlots()
             _ = await (packagesTask, slotsTask, bookedTask)
         }
-        .onChange(of: viewModel.selectedDate) { _ in
-            // Clear selected time slot when date changes so a stale slot
-            // cannot persist across dates, then re-check booked slots.
-            viewModel.selectedTimeSlot = nil
-            Task { await viewModel.fetchBookedTimeSlots() }
+        .onChange(of: viewModel.selectedPackage?.id) { _ in
+            if let time = viewModel.selectedTimeSlot,
+                !viewModel.isSlotAvailable(time)
+            {
+                viewModel.selectedTimeSlot = nil
+            }
         }
         .alert("Booking Confirmed", isPresented: $viewModel.bookingComplete) {
             Button("Done") {
@@ -61,23 +66,27 @@ struct BookSessionView: View {
         }
         .preferredColorScheme(.dark)
     }
-    
+
     // MARK: - Private Methods
-    
+
     /// Renders the calendar for date selection, restricting past dates.
     private func renderCalendarSection() -> some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Select Date")
                 .font(.headline)
-            
-            DatePicker("Select Date", selection: $viewModel.selectedDate, in: Date()..., displayedComponents: .date)
-                .datePickerStyle(.graphical)
-                .background(Color(UIColor.secondarySystemBackground))
-                .cornerRadius(12)
+
+            DatePicker(
+                "Select Date",
+                selection: $viewModel.selectedDate,
+                in: Date()...,
+                displayedComponents: .date
+            )
+            .datePickerStyle(.graphical)
+            .background(Color(UIColor.secondarySystemBackground))
+            .cornerRadius(12)
         }
     }
-    
-    /// Renders the grid of available time slots.
+
     private func renderTimeSlotsSection() -> some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Available Times")
@@ -100,22 +109,24 @@ struct BookSessionView: View {
                     spacing: 12
                 ) {
                     ForEach(viewModel.availableTimeSlots, id: \.self) { time in
-                        let isBooked: Bool = viewModel.bookedTimeSlots.contains(time)
+                        // FIXED: Uses the advanced interval overlap calculation
+                        let isAvailable = viewModel.isSlotAvailable(time)
+
                         TimeSlotButton(
                             time: time,
                             isSelected: viewModel.selectedTimeSlot == time,
-                            isBooked: isBooked,
+                            isBooked: !isAvailable,
                             action: { viewModel.selectTimeSlot(time) }
                         )
                     }
                 }
 
-                if !viewModel.bookedTimeSlots.isEmpty {
+                if !viewModel.bookedIntervals.isEmpty {
                     HStack(spacing: 6) {
                         Image(systemName: "lock.fill")
                             .font(.caption2)
                             .foregroundColor(.red.opacity(0.7))
-                        Text("Already booked — not available on this date")
+                        Text("Grey slots conflict with booked sessions")
                             .font(.caption)
                             .foregroundColor(.secondary)
                     }
@@ -124,31 +135,39 @@ struct BookSessionView: View {
             }
         }
     }
-    
+
     /// Renders the list of service packages fetched from Firebase.
     private func renderPackagesSection() -> some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Packages")
                 .font(.headline)
-            
+
             ForEach(viewModel.packages) { package in
                 Button(action: {
                     viewModel.selectPackage(package)
                 }) {
                     PackageRowView(activeServicePackage: package)
                         .padding()
-                        .background(viewModel.selectedPackage?.id == package.id ? Color.blue.opacity(0.15) : Color(UIColor.secondarySystemBackground))
+                        .background(
+                            viewModel.selectedPackage?.id == package.id
+                                ? Color.blue.opacity(0.15)
+                                : Color(UIColor.secondarySystemBackground)
+                        )
                         .cornerRadius(12)
                         .overlay(
                             RoundedRectangle(cornerRadius: 12)
-                                .stroke(viewModel.selectedPackage?.id == package.id ? Color.blue : Color.clear, lineWidth: 1.5)
+                                .stroke(
+                                    viewModel.selectedPackage?.id == package.id
+                                        ? Color.blue : Color.clear,
+                                    lineWidth: 1.5
+                                )
                         )
                 }
                 .buttonStyle(PlainButtonStyle())
             }
         }
     }
-    
+
     /// Renders the summary of costs and triggers the payment sheet.
     private func renderCheckoutSummarySection() -> some View {
         CheckoutSummaryView(
