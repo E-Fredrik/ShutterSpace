@@ -12,9 +12,16 @@ struct ContentView: View {
     @AppStorage("currentUserId") private var currentUserId: String = ""
     @AppStorage("currentUserRole") private var currentUserRole: String = ""
     
+    // Bypass for UI Testing
+    private var isUITestingAdmin: Bool {
+        ProcessInfo.processInfo.arguments.contains("-UITest_AdminMode")
+    }
+    
     var body: some View {
         Group {
-            if currentUserId.isEmpty {
+            if isUITestingAdmin {
+                AdminDashboardView()
+            } else if currentUserId.isEmpty {
                 LoginView()
             } else {
                 if currentUserRole == "Photographer" {

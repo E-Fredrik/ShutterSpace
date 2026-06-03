@@ -43,48 +43,20 @@ struct AdminUserDetailView: View {
                         .fontWeight(.semibold)
                         .foregroundColor(statusColor(for: viewModel.currentStatus))
                         .padding(.top, 4)
+                        .accessibilityIdentifier("admin_status_text")
                 }
                 .padding(.top)
                 
                 
-                VStack(alignment: .leading, spacing: 12) {
-                    Text("Account Action")
+                VStack(alignment: .leading, spacing: 16) {
+                    Text("Account Actions")
                         .font(.headline)
                         .foregroundColor(.secondary)
                     
                     HStack(spacing: 12) {
-                        Button(action: {
-                            Task { await viewModel.changeStatus(to: "Active") }
-                        }) {
-                            Text("Reactivate")
-                                .fontWeight(.semibold)
-                                .frame(width: .infinity, height: 44)
-                                .background(Color.green.opacity(0.2))
-                                .foregroundColor(.green)
-                                .cornerRadius(8)
-                        }
-                        
-                        Button(action: {
-                            Task { await viewModel.changeStatus(to: "Suspended") }
-                        }) {
-                            Text("Suspend")
-                                .fontWeight(.semibold)
-                                .frame(width: .infinity, height: 44)
-                                .background(Color.orange.opacity(0.2))
-                                .foregroundColor(.orange)
-                                .cornerRadius(8)
-                        }
-                        
-                        Button(action: {
-                            Task { await viewModel.changeStatus(to: "Banned") }
-                        }) {
-                            Text("Ban User")
-                                .fontWeight(.semibold)
-                                .frame(width: .infinity, height: 44)
-                                .background(Color.red.opacity(0.2))
-                                .foregroundColor(.red)
-                                .cornerRadius(8)
-                        }
+                        actionButton(title: "Reactivate", color: .green, status: "Active", identifier: "admin_reactivate_button")
+                        actionButton(title: "Suspend", color: .orange, status: "Suspended", identifier: "admin_suspend_button")
+                        actionButton(title: "Ban User", color: .red, status: "Banned", identifier: "admin_ban_button")
                     }
                 }
                 .padding(.horizontal)
@@ -137,6 +109,32 @@ struct AdminUserDetailView: View {
             // Fetch everything when the view appears
             await viewModel.fetchInitialData()
         }
+    }
+    
+    // Helper to create modern action buttons
+    @ViewBuilder
+    private func actionButton(title: String, color: Color, status: String, identifier: String) -> some View {
+        let isCurrent = viewModel.currentStatus == status
+        
+        Button(action: {
+            Task { await viewModel.changeStatus(to: status) }
+        }) {
+            Text(title)
+                .font(.subheadline)
+                .fontWeight(.bold)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 12)
+                .background(isCurrent ? color : color.opacity(0.15))
+                .foregroundColor(isCurrent ? .black : color)
+                .clipShape(RoundedRectangle(cornerRadius: 12))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(color.opacity(0.3), lineWidth: isCurrent ? 0 : 1)
+                )
+        }
+        .disabled(isCurrent)
+        .opacity(isCurrent ? 0.6 : 1.0)
+        .accessibilityIdentifier(identifier)
     }
     
     // Helper function for dynamic UI coloring

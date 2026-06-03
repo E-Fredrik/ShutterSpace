@@ -39,6 +39,7 @@ struct AdminDashboardView: View {
                         NavigationLink(destination: AdminUserListView()) {
                             Label("Manage Users", systemImage: "person.3.fill")
                         }
+                        .accessibilityIdentifier("admin_manage_users_link")
 
                         NavigationLink(destination: AdminBookingListView()) {
                             Label(
@@ -46,6 +47,7 @@ struct AdminDashboardView: View {
                                 systemImage: "calendar.badge.clock"
                             )
                         }
+                        .accessibilityIdentifier("admin_manage_bookings_link")
 
                         NavigationLink(destination: AdminFinancialReportView())
                         {
@@ -54,12 +56,14 @@ struct AdminDashboardView: View {
                                 systemImage: "chart.line.uptrend.xyaxis"
                             )
                         }
+                        .accessibilityIdentifier("admin_financial_reports_link")
                         NavigationLink(destination: AdminReportsListView()) {
                             Label(
                                 "User Reports",
                                 systemImage: "exclamationmark.shield.fill"
                             )
                         }
+                        .accessibilityIdentifier("admin_user_reports_link")
                     }
                 }
                 .listStyle(InsetGroupedListStyle())
