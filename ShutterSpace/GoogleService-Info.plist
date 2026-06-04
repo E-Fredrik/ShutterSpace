@@ -9,7 +9,7 @@
 	<key>PLIST_VERSION</key>
 	<string>1</string>
 	<key>BUNDLE_ID</key>
-	<string>MAD.ShutterSpace</string>
+	<string>SE.ShutterSpace</string>
 	<key>PROJECT_ID</key>
 	<string>shutterspace-80806</string>
 	<key>STORAGE_BUCKET</key>
@@ -25,7 +25,7 @@
 	<key>IS_SIGNIN_ENABLED</key>
 	<true></true>
 	<key>GOOGLE_APP_ID</key>
-	<string>1:826202514107:ios:6ff24c810dacb42ef23f9e</string>
+	<string>1:826202514107:ios:cbe96a4670d124daf23f9e</string>
 	<key>DATABASE_URL</key>
 	<string>https://shutterspace-80806-default-rtdb.asia-southeast1.firebasedatabase.app</string>
 </dict>
