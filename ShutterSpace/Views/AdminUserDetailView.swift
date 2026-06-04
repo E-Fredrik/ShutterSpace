@@ -8,146 +8,197 @@
 import SwiftUI
 
 struct AdminUserDetailView: View {
-    @StateObject private var viewModel: AdminUserDetailViewModel
+    let user: User
     
-    init(user: User) {
-        _viewModel = StateObject(wrappedValue: AdminUserDetailViewModel(user: user))
-    }
+    @StateObject private var viewModel = AdminUserDetailViewModel()
     
     var body: some View {
         ScrollView {
-            VStack(spacing: 24) {
+            VStack(spacing: 24.0) {
                 
-                // 1. User Info Header
-                VStack(spacing: 8) {
+                // MARK: - Header Profile Section
+                VStack(spacing: 8.0) {
                     Image(systemName: "person.crop.circle.badge.exclamationmark")
                         .resizable()
                         .scaledToFit()
                         .frame(width: 80, height: 80)
                         .foregroundColor(.red)
+                        .padding(.bottom, 8)
                     
-                    Text("\(viewModel.user.firstName) \(viewModel.user.lastName)")
-                        .font(.title2)
+                    Text("\(user.firstName) \(user.lastName)")
+                        .font(.title)
                         .fontWeight(.bold)
                     
-                    Text(viewModel.user.email)
+                    Text(user.email)
                         .foregroundColor(.secondary)
                     
-                    Text("ID: \(viewModel.user.id)")
+                    Text("ID: \(user.id)")
                         .font(.caption)
-                        .foregroundColor(.gray)
-                    
-                    
-                    Text("Current Status: \(viewModel.currentStatus)")
-                        .font(.subheadline)
-                        .fontWeight(.semibold)
-                        .foregroundColor(statusColor(for: viewModel.currentStatus))
-                        .padding(.top, 4)
-                        .accessibilityIdentifier("admin_status_text")
-                }
-                .padding(.top)
-                
-                
-                VStack(alignment: .leading, spacing: 16) {
-                    Text("Account Actions")
-                        .font(.headline)
                         .foregroundColor(.secondary)
                     
-                    HStack(spacing: 12) {
-                        actionButton(title: "Reactivate", color: .green, status: "Active", identifier: "admin_reactivate_button")
-                        actionButton(title: "Suspend", color: .orange, status: "Suspended", identifier: "admin_suspend_button")
-                        actionButton(title: "Ban User", color: .red, status: "Banned", identifier: "admin_ban_button")
+                    HStack {
+                        Text("Current Status:")
+                        Text(user.status)
+                    }
+                    .font(.headline)
+                    .foregroundColor(statusColor(user.status))
+                    .padding(.top, 4)
+                }
+                
+                // MARK: - Account Actions
+                VStack(alignment: .leading, spacing: 12.0) {
+                    Text("Account Actions")
+                        .font(.title3)
+                        .fontWeight(.bold)
+                    
+                    HStack(spacing: 12.0) {
+                        Button("Reactivate") {
+                            // viewModel.updateUserStatus(userId: user.id, newStatus: "Active")
+                        }
+                        .frame(maxWidth: .infinity, minHeight: 44)
+                        .background(Color.green.opacity(0.8))
+                        .foregroundColor(.white)
+                        .cornerRadius(10)
+                        
+                        Button("Suspend") {
+                            // viewModel.updateUserStatus(userId: user.id, newStatus: "Suspended")
+                        }
+                        .frame(maxWidth: .infinity, minHeight: 44)
+                        .background(Color.orange.opacity(0.8))
+                        .foregroundColor(.white)
+                        .cornerRadius(10)
+                        
+                        Button("Ban User") {
+                            // viewModel.updateUserStatus(userId: user.id, newStatus: "Banned")
+                        }
+                        .frame(maxWidth: .infinity, minHeight: 44)
+                        .background(Color.red.opacity(0.8))
+                        .foregroundColor(.white)
+                        .cornerRadius(10)
                     }
                 }
-                .padding(.horizontal)
                 
-                Divider().padding(.vertical, 8)
+                Divider()
+                    .padding(.vertical, 8)
                 
-                // 3. Chat Log Review Area
-                VStack(alignment: .leading, spacing: 12) {
+                // MARK: - Recent Chat Logs
+                VStack(alignment: .leading, spacing: 16.0) {
                     HStack {
                         Text("Recent Chat Logs")
-                            .font(.headline)
+                            .font(.title3)
+                            .fontWeight(.bold)
+                        
                         Spacer()
+                        
                         Button("Refresh") {
-                            Task { await viewModel.fetchRecentChats() }
+                            viewModel.fetchChatLogs(forUserId: user.id)
                         }
-                        .font(.caption)
+                        .font(.subheadline)
                     }
                     
-                    if viewModel.isLoadingChats {
-                        ProgressView().padding()
-                            .frame(maxWidth: .infinity, alignment: .center)
-                    } else if viewModel.recentMessages.isEmpty {
-                        Text("No recent messages found for this user.")
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
+                    if viewModel.isLoadingLogs && viewModel.chatLogs.isEmpty {
+                        ProgressView()
+                            .frame(maxWidth: .infinity)
                             .padding()
+                    } else if viewModel.chatLogs.isEmpty {
+                        Text("No recent messages found for this user.")
+                            .foregroundColor(.secondary)
                             .frame(maxWidth: .infinity, alignment: .center)
+                            .padding()
                             .background(Color(UIColor.secondarySystemBackground))
-                            .cornerRadius(8)
+                            .cornerRadius(12.0)
                     } else {
-                        VStack(alignment: .leading, spacing: 10) {
-                            ForEach(viewModel.recentMessages, id: \.self) { msg in
-                                Text(msg)
-                                    .padding(12)
-                                    .frame(maxWidth: .infinity, alignment: .leading)
-                                    .background(Color(UIColor.secondarySystemBackground))
-                                    .cornerRadius(8)
+                        // Constrain height so it scrolls independently inside the main view
+                        ScrollView {
+                            LazyVStack(spacing: 12.0) {
+                                ForEach(viewModel.chatLogs) { log in
+                                    renderChatLogRow(message: log, targetUserId: user.id)
+                                }
                             }
                         }
+                        .frame(maxHeight: 400)
                     }
                 }
-                .padding(.horizontal)
-                
             }
+            .padding()
         }
         .navigationTitle("Manage User")
         .navigationBarTitleDisplayMode(.inline)
         .preferredColorScheme(.dark)
-        .task {
-            // Fetch everything when the view appears
-            await viewModel.fetchInitialData()
+        .onAppear {
+            viewModel.fetchChatLogs(forUserId: user.id)
+        }
+        .onDisappear {
+            viewModel.stopObservingLogs()
         }
     }
     
-    // Helper to create modern action buttons
-    @ViewBuilder
-    private func actionButton(title: String, color: Color, status: String, identifier: String) -> some View {
-        let isCurrent = viewModel.currentStatus == status
-        
-        Button(action: {
-            Task { await viewModel.changeStatus(to: status) }
-        }) {
-            Text(title)
-                .font(.subheadline)
-                .fontWeight(.bold)
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 12)
-                .background(isCurrent ? color : color.opacity(0.15))
-                .foregroundColor(isCurrent ? .black : color)
-                .clipShape(RoundedRectangle(cornerRadius: 12))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 12)
-                        .stroke(color.opacity(0.3), lineWidth: isCurrent ? 0 : 1)
-                )
-        }
-        .disabled(isCurrent)
-        .opacity(isCurrent ? 0.6 : 1.0)
-        .accessibilityIdentifier(identifier)
-    }
+    // MARK: - Helper Methods
     
-    // Helper function for dynamic UI coloring
-    private func statusColor(for status: String) -> Color {
-        switch status {
-        case "Active": return .green
-        case "Suspended": return .orange
-        case "Banned": return .red
-        default: return .primary
+    private func statusColor(_ status: String) -> Color {
+        switch status.lowercased() {
+        case "active": return .green
+        case "suspended": return .orange
+        case "banned": return .red
+        default: return .secondary
         }
     }
 }
 
+// MARK: - Extracted Components
+
+extension AdminUserDetailView {
+    
+    @ViewBuilder
+    func renderChatLogRow(message: Message, targetUserId: String) -> some View {
+        let isSender = message.senderId == targetUserId
+        
+        VStack(alignment: .leading, spacing: 8.0) {
+            HStack {
+                Text(isSender ? "Sent" : "Received")
+                    .font(.caption)
+                    .fontWeight(.bold)
+                    .padding(.horizontal, 8.0)
+                    .padding(.vertical, 4.0)
+                    .background(isSender ? Color.blue.opacity(0.2) : Color.green.opacity(0.2))
+                    .foregroundColor(isSender ? .blue : .green)
+                    .cornerRadius(6.0)
+                
+                Text(isSender ? "To: \(message.receiverId.prefix(8))..." : "From: \(message.senderId.prefix(8))...")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                
+                Spacer()
+                
+                Text(message.timestamp.formatted(.dateTime.month().day().hour().minute()))
+                    .font(.caption2)
+                    .foregroundColor(.secondary)
+            }
+            
+            Text(message.content)
+                .font(.subheadline)
+                .foregroundColor(message.isBlocked ? .red : .primary)
+                .italic(message.isBlocked)
+            
+            if !message.isBlocked {
+                Button(action: {
+                    Task { await viewModel.blockMessage(messageId: message.id) }
+                }) {
+                    HStack {
+                        Image(systemName: "nosign")
+                        Text("Block Message")
+                    }
+                    .font(.caption)
+                    .foregroundColor(.red)
+                    .padding(.top, 4.0)
+                }
+            }
+        }
+        .padding()
+        .background(Color(UIColor.secondarySystemBackground))
+        .cornerRadius(12.0)
+    }
+}
 #Preview {
     AdminUserDetailView(
         user: User(

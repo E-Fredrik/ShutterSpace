@@ -36,7 +36,16 @@ struct DashboardView: View {
                 )
             }
             .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
+                ToolbarItemGroup(placement: .navigationBarTrailing) {
+
+                    // 1. The New Messages Button
+                    NavigationLink(destination: MessageListView()) {
+                        Image(systemName: "message.fill")
+                            .foregroundColor(.primary)
+                            .padding(.horizontal, 4)
+                    }
+
+                    // 2. Your Existing Profile Menu
                     Menu {
                         Button(action: {
                             isShowingEditProfile = true
@@ -62,8 +71,7 @@ struct DashboardView: View {
                             .padding(8)
                     }
                 }
-            }
-            .task {
+            }.task {
                 await viewModel.fetchDashboardData()
             }
             .preferredColorScheme(.dark)

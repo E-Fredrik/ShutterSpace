@@ -11,76 +11,94 @@ import Foundation
 
 @MainActor
 class AdminUserDetailViewModel: ObservableObject {
-    @Published var recentMessages: [String] = []
-    @Published var isLoadingChats: Bool = false
-    @Published var currentStatus: String = "Active"
 
-    let user: User
+    // Add these new properties
+    @Published var chatLogs: [Message] = []
+    @Published var isLoadingLogs: Bool = false
+
     private let databaseRef = Database.database().reference()
+    private var messagesHandle: DatabaseHandle?
 
-    init(user: User) {
-        self.user = user
-    }
+    // ... [Your existing suspend/ban logic stays here] ...
 
-    func fetchInitialData() async {
-        await fetchCurrentStatus()
-        await fetchRecentChats()
-    }
+    // MARK: - Chat Log Management
 
-    func changeStatus(to newStatus: String) async {
-        // Optimistically update the UI immediately
-        self.currentStatus = newStatus
+    func fetchChatLogs(forUserId userId: String) {
+        isLoadingLogs = true
 
-        do {
-            try await databaseRef.child("users").child(user.id)
-                .updateChildValues([
-                    "status": newStatus
-                ])
-        } catch {
-            print("Error updating user status: \(error.localizedDescription)")
-            await fetchCurrentStatus()
-        }
-    }
+        // Use .observe to stream past AND future messages in real-time
+        messagesHandle = databaseRef.child("messages").observe(.value) {
+            [weak self] snapshot in
+            guard let self = self else { return }
 
-    private func fetchCurrentStatus() async {
-        do {
-            let snap = try await databaseRef.child("users").child(user.id)
-                .child("status").getData()
-            if let status = snap.value as? String {
-                self.currentStatus = status
-            }
-        } catch {
-            print("Error fetching status: \(error.localizedDescription)")
-        }
-    }
+            var fetchedLogs: [Message] = []
 
-    func fetchRecentChats() async {
-        isLoadingChats = true
-
-        do {
-            let snap = try await databaseRef.child("messages")
-                .queryOrdered(byChild: "senderId")
-                .queryEqual(toValue: user.id)
-                .queryLimited(toLast: 20)
-                .getData()
-
-            if let children = snap.children.allObjects as? [DataSnapshot] {
-                var logs: [String] = []
+            if let children = snapshot.children.allObjects as? [DataSnapshot] {
                 for child in children {
-                    if let dict = child.value as? [String: Any],
-                        let text = dict["text"] as? String
-                    {
-                        logs.append(text)
+                    guard let dict = child.value as? [String: Any],
+                        let senderId = dict["senderId"] as? String,
+                        let receiverId = dict["receiverId"] as? String
+                    else {
+                        continue
+                    }
+
+                    // Filter messages where this specific user is either the sender or receiver
+                    if senderId == userId || receiverId == userId {
+                        let id = dict["id"] as? String ?? child.key
+                        let content = dict["content"] as? String ?? ""
+                        let timestamp = dict["timestamp"] as? Double ?? 0
+                        let isBlocked = dict["isBlocked"] as? Bool ?? false
+
+                        // Handle epoch milliseconds
+                        let date =
+                            timestamp > 9_999_999_999
+                            ? Date(timeIntervalSince1970: timestamp / 1000)
+                            : Date(timeIntervalSinceReferenceDate: timestamp)
+
+                        let statusRaw = dict["status"] as? String ?? "delivered"
+                        let status =
+                            MessageStatus(rawValue: statusRaw) ?? .delivered
+
+                        let message = Message(
+                            id: id,
+                            senderId: senderId,
+                            receiverId: receiverId,
+                            content: content,
+                            timestamp: date,
+                            status: status,
+                            isBlocked: isBlocked
+                        )
+                        fetchedLogs.append(message)
                     }
                 }
-                self.recentMessages = logs.reversed()  // Show newest first
-            } else {
-                self.recentMessages = []  // Clear if no messages found
             }
-        } catch {
-            print("Error fetching chats: \(error.localizedDescription)")
-        }
 
-        isLoadingChats = false
+            DispatchQueue.main.async {
+                // Sort by newest first
+                self.chatLogs = fetchedLogs.sorted(by: {
+                    $0.timestamp > $1.timestamp
+                })
+                self.isLoadingLogs = false
+            }
+        }
+    }
+
+    func blockMessage(messageId: String) async {
+        do {
+            let updates: [String: Any] = [
+                "isBlocked": true,
+                "content": "Message blocked by Admin",
+            ]
+            try await databaseRef.child("messages").child(messageId)
+                .updateChildValues(updates)
+        } catch {
+            print("Failed to block message: \(error.localizedDescription)")
+        }
+    }
+
+    func stopObservingLogs() {
+        if let handle = messagesHandle {
+            databaseRef.child("messages").removeObserver(withHandle: handle)
+        }
     }
 }

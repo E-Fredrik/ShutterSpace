@@ -32,7 +32,6 @@ class AuthViewModel: ObservableObject {
     @Published var errorMessage: String = ""
     @Published var isAuthenticated: Bool = false
 
-    // ADDED: Alert properties for banned/suspended accounts
     @Published var showAlert: Bool = false
     @Published var alertMessage: String = ""
     @Published var alertTitle: String = "Account Alert"
@@ -70,6 +69,21 @@ class AuthViewModel: ObservableObject {
 
     private let databaseRef = Database.database().reference()
 
+    // NEW: Method to completely clear the form data
+    private func clearForm() {
+        self.emailInput = ""
+        self.accessCodeInput = ""
+        self.firstNameInput = ""
+        self.lastNameInput = ""
+        self.locationInput = ""
+        self.customCategoryInput = ""
+        self.selectedCategory = "Wedding"
+        self.selectedRole = "Client"
+        self.profileImageData = nil
+        self.profileImageDisplay = nil
+        self.errorMessage = ""
+    }
+
     func login() async {
         isLoading = true
         errorMessage = ""
@@ -90,8 +104,6 @@ class AuthViewModel: ObservableObject {
             ).getData()
 
             if let dict = snapshot.value as? [String: Any] {
-
-                // NEW: Intercept login to check account status
                 let status = dict["status"] as? String ?? "Active"
 
                 if status == "Banned" {
@@ -124,6 +136,7 @@ class AuthViewModel: ObservableObject {
                 )
 
                 self.isAuthenticated = true
+                self.clearForm()  // NEW: Wipe the fields immediately
             } else {
                 errorMessage = "User profile data not found."
             }
@@ -171,7 +184,7 @@ class AuthViewModel: ObservableObject {
                 ),
                 "email": formattedEmail,
                 "role": selectedRole,
-                "status": "Active",  // Ensure all new users start out Active
+                "status": "Active",
             ]
 
             if selectedRole == "Photographer" {
@@ -202,6 +215,7 @@ class AuthViewModel: ObservableObject {
             UserDefaults.standard.set(selectedRole, forKey: "currentUserRole")
 
             self.isAuthenticated = true
+            self.clearForm()  // NEW: Wipe the fields immediately
 
         } catch {
             if let nsError = error as NSError? {
@@ -222,7 +236,6 @@ class AuthViewModel: ObservableObject {
                     errorMessage = "Registration failed. Please try again."
                 }
             }
-            print("Registration error: \(error.localizedDescription)")
         }
 
         isLoading = false
@@ -241,11 +254,7 @@ class AuthViewModel: ObservableObject {
         UserDefaults.standard.removeObject(forKey: "currentUserRole")
 
         self.isAuthenticated = false
-        self.emailInput = ""
-        self.accessCodeInput = ""
-        self.locationInput = ""
-        self.selectedCategory = "Wedding"
-        self.customCategoryInput = ""
+        self.clearForm()
     }
 
     func processImageSelection(item: PhotosPickerItem?) {
@@ -277,7 +286,6 @@ class AuthViewModel: ObservableObject {
         }
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
-
         let boundary = UUID().uuidString
         request.setValue(
             "multipart/form-data; boundary=\(boundary)",
@@ -290,7 +298,6 @@ class AuthViewModel: ObservableObject {
                 .data(using: .utf8)!
         )
         body.append("\(uploadPreset)\r\n".data(using: .utf8)!)
-
         body.append("--\(boundary)\r\n".data(using: .utf8)!)
         body.append(
             "Content-Disposition: form-data; name=\"file\"; filename=\"profile.jpg\"\r\n"
@@ -299,7 +306,6 @@ class AuthViewModel: ObservableObject {
         body.append("Content-Type: image/jpeg\r\n\r\n".data(using: .utf8)!)
         body.append(data)
         body.append("\r\n".data(using: .utf8)!)
-
         body.append("--\(boundary)--\r\n".data(using: .utf8)!)
 
         let (responseData, response) = try await URLSession.shared.upload(
@@ -323,9 +329,7 @@ class AuthViewModel: ObservableObject {
     private func optimizeCloudinaryUrl(from originalUrl: String, width: Int)
         -> String
     {
-        if originalUrl.contains("c_scale") {
-            return originalUrl
-        }
+        if originalUrl.contains("c_scale") { return originalUrl }
         return originalUrl.replacingOccurrences(
             of: "/upload/",
             with:

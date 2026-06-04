@@ -6,6 +6,7 @@
 //
 
 import Combine
+import FirebaseAuth  // NEW: Required to sign out
 import FirebaseDatabase
 import Foundation
 
@@ -17,6 +18,7 @@ class UserProfileViewModel: ObservableObject {
     @Published var profileImageUrl: String = ""
     @Published var isLoading: Bool = false
     private let databaseReference = Database.database().reference()
+
     func fetchCurrentUser() async {
         guard let userId = UserDefaults.standard.string(forKey: "currentUserId")
         else { return }
@@ -41,6 +43,9 @@ class UserProfileViewModel: ObservableObject {
     }
 
     func logout() {
+        // NEW: Force Firebase Auth sign out
+        try? Auth.auth().signOut()
+
         UserDefaults.standard.removeObject(forKey: "currentUserId")
         UserDefaults.standard.removeObject(forKey: "currentUserRole")
     }

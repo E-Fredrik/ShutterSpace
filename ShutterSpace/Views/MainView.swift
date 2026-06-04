@@ -21,12 +21,18 @@ struct MainView: View {
                     Image(systemName: "calendar.badge.clock")
                     Text("My Sessions")
                 }
+            MessageListView()
+                .tabItem {
+                    Image(systemName: "message.fill")
+                    Text("Messages")
+                }
 
             UserProfileView()
                 .tabItem {
                     Image(systemName: "person.crop.circle")
                     Text("Profile")
                 }
+
         }
         .tint(.white)
         .preferredColorScheme(.dark)

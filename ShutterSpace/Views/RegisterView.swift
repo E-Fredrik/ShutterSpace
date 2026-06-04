@@ -33,6 +33,12 @@ struct RegisterView: View {
         .preferredColorScheme(.dark)
         .animation(.easeInOut, value: authViewModel.selectedRole)
         .animation(.easeInOut, value: authViewModel.selectedCategory)
+        // NEW: Dismiss this view back to the Login Page upon success
+        .onChange(of: authViewModel.isAuthenticated) { _, isAuthenticated in
+            if isAuthenticated {
+                dismissView()
+            }
+        }
     }
 }
 

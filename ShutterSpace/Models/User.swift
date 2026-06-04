@@ -13,18 +13,21 @@ class User: Identifiable, Codable {
     var lastName: String
     var email: String
     var role: String
+    var status: String
 
     init(
         id: String,
         firstName: String,
         lastName: String,
         email: String,
-        role: String
+        role: String,
+        status: String = "Active"
     ) {
         self.id = id
         self.firstName = firstName
         self.lastName = lastName
         self.email = email
         self.role = role
+        self.status = status
     }
 }
