@@ -15,7 +15,8 @@ class Admin: User {
         firstName: String,
         lastName: String,
         email: String,
-        clearanceLevel: String
+        clearanceLevel: String,
+        status: String = "Active" // Added status here
     ) {
         self.clearanceLevel = clearanceLevel
         super.init(
@@ -23,7 +24,8 @@ class Admin: User {
             firstName: firstName,
             lastName: lastName,
             email: email,
-            role: "Admin"
+            role: "Admin",
+            status: status // Passed it to the parent class here
         )
     }
 

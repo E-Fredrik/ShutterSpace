@@ -23,7 +23,7 @@ class ManageAvailabilityViewModel: ObservableObject {
         UserDefaults.standard.string(forKey: "currentUserId") ?? ""
     }
 
-    func fetchTimeSlots() async {
+    func fetchTimeSlots() async { //Takes timeslots already set by photographer and displays them
         guard !photographerId.isEmpty else { return }
         isLoading = true
         do {

@@ -34,13 +34,14 @@ class MessageListViewModel: ObservableObject {
                       let timestamp = dict["timestamp"] as? Double else { continue }
                 
                 let partnerImageUrl = dict["partnerImageUrl"] as? String ?? ""
-                
+                let isBlocked = dict["isBlocked"] as? Bool ?? false // Add this
                 let chat = RecentChat(
                     id: partnerId,
                     partnerName: partnerName,
                     partnerImageUrl: partnerImageUrl,
                     lastMessage: lastMessage,
-                    timestamp: timestamp
+                    timestamp: timestamp,
+                    isBlocked: isBlocked // Pass it here
                 )
                 fetchedChats.append(chat)
             }

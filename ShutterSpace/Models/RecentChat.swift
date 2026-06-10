@@ -9,9 +9,10 @@
 import Foundation
 
 struct RecentChat: Identifiable {
-    let id: String // The Partner's User ID
+    let id: String
     let partnerName: String
     let partnerImageUrl: String
     let lastMessage: String
     let timestamp: Double
+    let isBlocked: Bool // ADD THIS
 }

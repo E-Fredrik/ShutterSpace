@@ -210,7 +210,7 @@ class ChatViewModel: ObservableObject {
         )
     }
 
-    private func containsContactInfo(_ text: String) -> Bool {
+    private func containsContactInfo(_ text: String) -> Bool { //Regex check to detect if the message contains email or phone number patterns
         let emailRegex = "[A-Z0-9a-z._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,64}"
         let phoneRegex =
             "(?:\\+?(\\d{1,3}))?([-. (]*(\\d{3})[-. )]*)?((\\d{3})[-. ]*(\\d{2,4})(?:[-. ]*(\\d{2,4}))?)"

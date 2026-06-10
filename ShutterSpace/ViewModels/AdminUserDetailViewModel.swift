@@ -12,14 +12,57 @@ import Foundation
 @MainActor
 class AdminUserDetailViewModel: ObservableObject {
 
-    // Add these new properties
+    // Status Properties
+    @Published var currentStatus: String = "Active"
+
+    // Chat Log Properties
     @Published var chatLogs: [Message] = []
     @Published var isLoadingLogs: Bool = false
 
+    let user: User
     private let databaseRef = Database.database().reference()
     private var messagesHandle: DatabaseHandle?
 
-    // ... [Your existing suspend/ban logic stays here] ...
+    init(user: User) {
+        self.user = user
+    }
+
+    // MARK: - Status Management
+
+    func fetchInitialData() async {
+        await fetchCurrentStatus()
+        fetchChatLogs(forUserId: user.id)
+    }
+
+    func changeStatus(to newStatus: String) async {
+        // Optimistically update the UI immediately
+        self.currentStatus = newStatus
+
+        do {
+            try await databaseRef.child("users").child(user.id)
+                .updateChildValues([
+                    "status": newStatus
+                ])
+        } catch {
+            print("Error updating user status: \(error.localizedDescription)")
+            await fetchCurrentStatus()
+        }
+    }
+
+    private func fetchCurrentStatus() async {
+        do {
+            let snap = try await databaseRef.child("users").child(user.id)
+                .child("status").getData()
+            if let status = snap.value as? String {
+                self.currentStatus = status
+            } else {
+                // Fallback to the user model's status if database fetch fails initially
+                self.currentStatus = user.status
+            }
+        } catch {
+            print("Error fetching status: \(error.localizedDescription)")
+        }
+    }
 
     // MARK: - Chat Log Management
 
@@ -83,14 +126,27 @@ class AdminUserDetailViewModel: ObservableObject {
         }
     }
 
-    func blockMessage(messageId: String) async {
+    func blockMessage(message: Message) async {
         do {
             let updates: [String: Any] = [
                 "isBlocked": true,
                 "content": "Message blocked by Admin",
             ]
-            try await databaseRef.child("messages").child(messageId)
+            // Update the main message
+            try await databaseRef.child("messages").child(message.id)
                 .updateChildValues(updates)
+
+            // Update the caches in Inboxes to include the isBlocked flag
+            let chatUpdates: [String: Any] = [
+                "lastMessage": "Message blocked by Admin",
+                "isBlocked": true,  // ADD THIS FIELD
+            ]
+
+            try await databaseRef.child("recentChats").child(message.senderId)
+                .child(message.receiverId).updateChildValues(chatUpdates)
+            try await databaseRef.child("recentChats").child(message.receiverId)
+                .child(message.senderId).updateChildValues(chatUpdates)
+
         } catch {
             print("Failed to block message: \(error.localizedDescription)")
         }

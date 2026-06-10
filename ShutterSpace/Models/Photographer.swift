@@ -25,7 +25,8 @@ class Photographer: User {
         reviewCount: Int = 0,
         location: String,
         category: String,
-        profileImageUrl: String
+        profileImageUrl: String,
+        status: String = "Active" // Added status here
     ) {
         self.stripeAccountId = stripeAccountId
         self.rating = rating
@@ -33,14 +34,23 @@ class Photographer: User {
         self.location = location
         self.category = category
         self.profileImageUrl = profileImageUrl
-        super.init(id: id, firstName: firstName, lastName: lastName, email: email, role: "Photographer")
+        
+        // Passed status to the parent class below
+        super.init(
+            id: id,
+            firstName: firstName,
+            lastName: lastName,
+            email: email,
+            role: "Photographer",
+            status: status
+        )
     }
 
     required init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         self.stripeAccountId = try container.decode(String.self, forKey: .stripeAccountId)
         self.rating = try container.decode(Double.self, forKey: .rating)
-        self.reviewCount = try container.decodeIfPresent(Int.self, forKey: .reviewCount) ?? 0 
+        self.reviewCount = try container.decodeIfPresent(Int.self, forKey: .reviewCount) ?? 0
         self.location = try container.decodeIfPresent(String.self, forKey: .location) ?? "Unknown"
         self.category = try container.decodeIfPresent(String.self, forKey: .category) ?? "General"
         self.profileImageUrl = try container.decodeIfPresent(String.self, forKey: .profileImageUrl) ?? ""

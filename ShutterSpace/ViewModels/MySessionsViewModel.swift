@@ -93,7 +93,7 @@ class MySessionsViewModel: ObservableObject {
         isLoading = false
     }
 
-    func submitReview(
+    func submitReview( //Handles review submission and updates related data
         bookingId: String,
         photographerId: String,
         starRating: Int,
@@ -162,7 +162,7 @@ class MySessionsViewModel: ObservableObject {
         return "Custom Session"
     }
 
-    private func recalculatePhotographerRating(photographerId: String) async {
+    private func recalculatePhotographerRating(photographerId: String) async { //Calculates the average rating for a photographer based on all their reviews and updates the rating in the user's profile
         do {
             let snapshot = try await databaseReference
                 .child("reviews")

@@ -17,7 +17,7 @@ class AdminDashboardViewModel: ObservableObject {
 
     private let databaseRef = Database.database().reference()
 
-    var filteredUsers: [User] {
+    var filteredUsers: [User] { //Filter users based on search text matching first name, last name, or email
         if searchText.isEmpty {
             return allUsers
         } else {
@@ -48,7 +48,6 @@ class AdminDashboardViewModel: ObservableObject {
                             User.self,
                             from: jsonData
                         ) {
-                            // FIXED: Explicitly prevent Admins from appearing in the management list
                             if user.role != "Admin" {
                                 fetchedUsers.append(user)
                             }
@@ -65,7 +64,7 @@ class AdminDashboardViewModel: ObservableObject {
         isLoading = false
     }
 
-    func updateUserStatus(userId: String, newStatus: String) async {
+    func updateUserStatus(userId: String, newStatus: String) async { //Update user status whether banned or active
         do {
             try await databaseRef.child("users").child(userId)
                 .updateChildValues([

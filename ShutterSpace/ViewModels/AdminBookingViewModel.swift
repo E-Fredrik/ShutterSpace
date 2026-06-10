@@ -48,7 +48,6 @@ class AdminBookingViewModel: ObservableObject {
                 for child in children {
                     if let dict = child.value as? [String: Any] {
                         
-                        // FIXED: Read the correct "totalCost" key and handle both Ints and Doubles
                         var extractedPrice: Double = 0.0
                         if let costVal = dict["totalCost"] {
                             if let doubleVal = costVal as? Double { extractedPrice = doubleVal }

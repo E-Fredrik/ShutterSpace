@@ -35,7 +35,7 @@ class BookingViewModel: ObservableObject {
         self.photographerId = photographerId
     }
     
-    private func timeToMinutes(_ timeStr: String) -> Int {
+    private func timeToMinutes(_ timeStr: String) -> Int { //Formats time strings like "10:30 AM" or "2 PM" into total minutes from midnight for easier calculations
         let cleanStr = timeStr.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
         let isPM = cleanStr.contains("pm")
         let isAM = cleanStr.contains("am")

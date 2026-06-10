@@ -41,21 +41,21 @@ struct AdminDashboardView: View {
                         }
                         .accessibilityIdentifier("admin_manage_users_link")
 
-                        NavigationLink(destination: AdminBookingListView()) {
-                            Label(
-                                "Manage Bookings",
-                                systemImage: "calendar.badge.clock"
-                            )
-                        }
-                        .accessibilityIdentifier("admin_manage_bookings_link")
-
-                        NavigationLink(destination: AdminFinancialReportView())
-                        {
-                            Label(
-                                "Financial Reports",
-                                systemImage: "chart.line.uptrend.xyaxis"
-                            )
-                        }
+//                        NavigationLink(destination: AdminBookingListView()) {
+//                            Label(
+//                                "Manage Bookings",
+//                                systemImage: "calendar.badge.clock"
+//                            )
+//                        }
+//                        .accessibilityIdentifier("admin_manage_bookings_link")
+//
+//                        NavigationLink(destination: AdminFinancialReportView())
+//                        {
+//                            Label(
+//                                "Financial Reports",
+//                                systemImage: "chart.line.uptrend.xyaxis"
+//                            )
+//                        }
                         .accessibilityIdentifier("admin_financial_reports_link")
                         NavigationLink(destination: AdminReportsListView()) {
                             Label(

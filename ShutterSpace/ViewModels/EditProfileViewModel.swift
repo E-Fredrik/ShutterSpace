@@ -39,8 +39,8 @@ class EditProfileViewModel: ObservableObject {
         self.userId = userId
         self.userRole = userRole
     }
-    
-    func fetchUserData() async {
+     
+    func fetchUserData() async { //Takes user data
         
         isLoading = true
         
@@ -76,7 +76,7 @@ class EditProfileViewModel: ObservableObject {
         isLoading = false
     }
     
-    func saveProfile() async -> Bool {
+    func saveProfile() async -> Bool { //Saves profile to firebase
         
         isLoading = true
         errorMessage = ""
@@ -114,7 +114,7 @@ class EditProfileViewModel: ObservableObject {
         }
     }
     
-    func processImageSelection(item: PhotosPickerItem?) {
+    func processImageSelection(item: PhotosPickerItem?) { //Processes the image selected by the user and prepares it for display and upload
         
         guard let item = item else { return }
         
@@ -128,7 +128,7 @@ class EditProfileViewModel: ObservableObject {
         }
     }
     
-    private func uploadImageToCloudinary(data: Data) async throws -> String {
+    private func uploadImageToCloudinary(data: Data) async throws -> String { //Formats images and uploads to cloudinary, returns the secure url of the uploaded image
         
         guard let cloudName = Bundle.main.object(forInfoDictionaryKey: "CloudinaryCloudName") as? String,
               let uploadPreset = Bundle.main.object(forInfoDictionaryKey: "CloudinaryUploadPreset") as? String,
@@ -164,7 +164,7 @@ class EditProfileViewModel: ObservableObject {
         return secureUrl
     }
     
-    private func optimizeCloudinaryUrl(from originalUrl: String, width: Int) -> String {
+    private func optimizeCloudinaryUrl(from originalUrl: String, width: Int) -> String { //Inserts transformation parameters into the Cloudinary URL to optimize image delivery for profile pictures. It checks if transformations are already present to avoid duplication.
         
         if originalUrl.contains("c_scale") { return originalUrl }
         return originalUrl.replacingOccurrences(of: "/upload/", with: "/upload/w_\(width),c_scale,q_auto,f_auto,c_fill,ar_1:1,g_face/")

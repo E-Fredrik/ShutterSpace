@@ -36,7 +36,7 @@ class DashboardViewModel: ObservableObject {
         isLoading = false
     }
 
-    func acceptBooking(session: DashboardSession) async {
+    func acceptBooking(session: DashboardSession) async { 
         let reqStart = timeToMinutes(session.timeSlot)
         let reqEnd = reqStart + session.duration
 

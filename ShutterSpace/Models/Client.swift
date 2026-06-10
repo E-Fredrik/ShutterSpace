@@ -15,7 +15,8 @@ class Client: User {
         firstName: String,
         lastName: String,
         email: String,
-        preferences: String
+        preferences: String,
+        status: String = "Active"  // Added status here
     ) {
         self.preferences = preferences
         super.init(
@@ -23,7 +24,8 @@ class Client: User {
             firstName: firstName,
             lastName: lastName,
             email: email,
-            role: "Client"
+            role: "Client",
+            status: status  // Passed it to the parent class here
         )
     }
 

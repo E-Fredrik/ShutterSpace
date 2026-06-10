@@ -23,7 +23,6 @@ class BrowseViewModel: ObservableObject {
         isLoading = true
 
         do {
-            // 1. Fetch all photographers
             let snapshot = try await databaseRef.child("users")
                 .queryOrdered(byChild: "role")
                 .queryEqual(toValue: "Photographer")

@@ -45,7 +45,7 @@ struct EditProfileView: View {
                             }
                         }
                     }
-                    .disabled(editViewModel.isLoading)
+                    .disabled(editViewModel.isLoading || editViewModel.firstName.isEmpty || editViewModel.lastName.isEmpty || (editViewModel.userRole == "Photographer" && editViewModel.category.isEmpty))
                 }
             }
             .task {

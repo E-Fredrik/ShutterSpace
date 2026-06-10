@@ -16,7 +16,7 @@ class AdminReportsViewModel: ObservableObject {
     
     private let databaseRef = Database.database().reference()
     
-    func fetchReports() async {
+    func fetchReports() async { //Shows reports that has been submitted by users, sorted by pending first and then by newest
         isLoading = true
         do {
             let snapshot = try await databaseRef.child("reports").getData()
